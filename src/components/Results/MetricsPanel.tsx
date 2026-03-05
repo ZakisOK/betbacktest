@@ -37,9 +37,9 @@ export const MetricsPanel: React.FC<Props> = ({ results, previous }) => {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
         <Tile label="Net P&L"      value={`${m.net_pnl>=0?'+':''}$${Math.abs(m.net_pnl).toFixed(0)}`}          color={G(m.net_pnl)}     sub={`${results.config.num_shoes.toLocaleString()} shoes`} delta={d(m.net_pnl, p?.net_pnl)}/>
         <Tile label="ROI"          value={`${(m.roi*100).toFixed(3)}%`}                                          color={G(m.roi)}          sub="of wagered"              delta={p ? (m.roi-p.roi)*100 : undefined}/>
-        <Tile label="Win Rate"     value={`${(m.win_rate*100).toFixed(2)}%`}                                     color={G(m.win_rate,0.45)} sub={`${m.total_wins.toLocaleString()} wins`}/>
-        <Tile label="EV / Hand"    value={`${m.ev_per_hand>=0?'+':''}$${m.ev_per_hand.toFixed(4)}`}             color={G(m.ev_per_hand)}  sub="per hand dealt"/>
-        <Tile label="Profit Factor"value={isFinite(m.profit_factor) ? m.profit_factor.toFixed(3) : '∞'}         color={G(m.profit_factor,1)} sub="wins ÷ losses"/>
+        <Tile label="Win Rate"     value={`${(m.win_rate*100).toFixed(2)}%`}                                     color={G(m.win_rate,0.50)} sub="50% = break even (before commission)"/>
+        <Tile label="EV / Hand"    value={`${m.ev_per_hand>=0?'+':''}$${m.ev_per_hand.toFixed(4)}`}             color={G(m.ev_per_hand)}  sub="avg profit per hand dealt"/>
+        <Tile label="Profit Factor"value={isFinite(m.profit_factor) ? m.profit_factor.toFixed(3) : '∞'}         color={G(m.profit_factor,1)} sub="wins ÷ losses (>1 = profitable)"/>
         <Tile label="Avg Bet"      value={`$${m.avg_bet_size.toFixed(2)}`}                                       color="text-white/80"     sub="per hand"/>
       </div>
 
@@ -54,11 +54,11 @@ export const MetricsPanel: React.FC<Props> = ({ results, previous }) => {
           sub="bankroll→0"/>
         <Tile label="Sharpe"   value={m.sharpe_ratio.toFixed(3)}
           color={m.sharpe_ratio>1?'text-emerald-400':m.sharpe_ratio>0?'text-amber-400':'text-red-400'}
-          sub="risk-adj return"/>
+          sub="return per unit of risk"/>
         <Tile label="Sortino"  value={m.sortino_ratio.toFixed(3)}
           color={m.sortino_ratio>1?'text-emerald-400':m.sortino_ratio>0?'text-amber-400':'text-red-400'}
-          sub="downside risk"/>
-        <Tile label="Kelly %"  value={`${(m.kelly_fraction*100).toFixed(2)}%`} color="text-blue-400" sub="optimal fraction"/>
+          sub="return per unit of downside"/>
+        <Tile label="Kelly %"  value={`${(m.kelly_fraction*100).toFixed(2)}%`} color="text-blue-400" sub="optimal bet fraction of bankroll"/>
       </div>
 
       {SEC('Streaks & Distribution')}

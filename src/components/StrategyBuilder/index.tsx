@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Plus, Play, Save, Upload, Download, FolderOpen, X, Loader2, ChevronDown, ChevronRight, Sliders, Sparkles, Check, AlertCircle, Zap, Bot } from 'lucide-react'
+import { Plus, Play, Save, Upload, Download, FolderOpen, X, Loader2, ChevronDown, ChevronRight, Sliders, Sparkles, Check, AlertCircle, Zap, Bot, MoreHorizontal } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { RuleCard } from './RuleCard'
 import { SimConfig } from './SimulationConfig'
@@ -28,6 +28,7 @@ export const StrategyBuilder: React.FC = () => {
   const [editingName,      setEditingName]      = useState(false)
   const [showDiscovery,    setShowDiscovery]    = useState(false)
   const [showAutoOptimizer,setShowAutoOptimizer] = useState(false)
+  const [showUtilMenu,     setShowUtilMenu]     = useState(false)
 
   // Natural language input state
   const [nlText, setNlText]         = useState('')
@@ -99,21 +100,42 @@ export const StrategyBuilder: React.FC = () => {
               {currentStrategy.name}
             </button>
           )}
-          <div className="flex gap-0.5 shrink-0">
-            {[
-              { icon: <Bot size={12}/>,       title: 'Auto-Optimizer', fn: () => setShowAutoOptimizer(true), highlight: true, highlightColor: 'rgba(167,139,250,0.8)' },
-              { icon: <Zap size={12}/>,       title: 'Auto-Discover',  fn: () => setShowDiscovery(true),    highlight: true, highlightColor: 'rgba(251,191,36,0.7)' },
-              { icon: <Upload size={12}/>,    title: 'Import JSON',    fn: handleImport },
-              { icon: <Download size={12}/>,  title: 'Export JSON',    fn: handleExport },
-              { icon: <Save size={12}/>,      title: 'Save to Library',fn: saveStrategy },
-              { icon: <FolderOpen size={12}/>,title: 'Library',        fn: () => setShowLibrary(!showLibrary) },
-            ].map(({ icon, title, fn, highlight, highlightColor }: any) => (
-              <button key={title} title={title} onClick={fn}
-                className="p-1.5 rounded-lg transition-all hover:bg-white/10 text-white/35 hover:text-white/70"
-                style={highlight ? { color: highlightColor ?? 'rgba(251,191,36,0.7)' } : undefined}>
-                {icon}
+          <div className="flex items-center gap-1 shrink-0">
+            {/* AI Optimize pill */}
+            <button onClick={() => setShowAutoOptimizer(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"
+              style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', color: 'rgba(196,181,253,0.9)' }}>
+              <Bot size={10}/>AI Optimize
+            </button>
+            {/* Discover pill */}
+            <button onClick={() => setShowDiscovery(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"
+              style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)', color: 'rgba(252,211,77,0.9)' }}>
+              <Zap size={10}/>Discover
+            </button>
+            {/* ⋯ utility overflow */}
+            <div className="relative">
+              <button onClick={() => setShowUtilMenu(!showUtilMenu)}
+                className="p-1.5 rounded-lg transition-all hover:bg-white/10 text-white/35 hover:text-white/70">
+                <MoreHorizontal size={13}/>
               </button>
-            ))}
+              {showUtilMenu && (
+                <div className="absolute right-0 top-8 z-30 rounded-xl overflow-hidden min-w-[140px]"
+                  style={{ background: 'rgba(15,20,40,0.95)', border: '1px solid rgba(255,255,255,0.12)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                  {[
+                    { icon: <Upload size={11}/>,    label: 'Import JSON',     fn: handleImport },
+                    { icon: <Download size={11}/>,  label: 'Export JSON',     fn: handleExport },
+                    { icon: <Save size={11}/>,      label: 'Save to Library', fn: saveStrategy },
+                    { icon: <FolderOpen size={11}/>,label: 'Open Library',    fn: () => { setShowLibrary(!showLibrary); setShowUtilMenu(false) } },
+                  ].map(({ icon, label, fn }) => (
+                    <button key={label} onClick={() => { fn(); setShowUtilMenu(false) }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-white/55 hover:text-white hover:bg-white/08 transition-colors text-left">
+                      {icon}{label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -159,12 +181,16 @@ export const StrategyBuilder: React.FC = () => {
           <span className="section-label">Rules ({currentStrategy.rules.length})</span>
           <button onClick={() => addRule(DEFAULT_NEW_RULE)}
             className="flex items-center gap-1 text-[10px] font-medium text-blue-400/90 hover:text-blue-300 transition-colors">
-            <Plus size={11}/>Add Rule
+            <Plus size={11}/>Add Rule Manually
           </button>
         </div>
 
         {/* Natural language input */}
         <div className="mb-3">
+          <div className="flex items-center gap-1.5 mb-1.5">
+            <Sparkles size={10} style={{ color: 'rgba(99,102,241,0.7)' }}/>
+            <span className="text-[10px] text-white/45">Describe a rule in plain English — AI will convert it</span>
+          </div>
           <div className="relative">
             <Sparkles size={12}
               className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
@@ -251,8 +277,30 @@ export const StrategyBuilder: React.FC = () => {
         )}
       </div>
 
+      {/* Shoes quick-select */}
+      <div className="px-4 pt-2.5 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center gap-2 mb-2">
+          <span className="section-label">Shoes</span>
+          <div className="flex gap-1 flex-1">
+            {[100, 1000, 10000, 100000].map(n => {
+              const label = n >= 1000 ? `${n/1000}K` : `${n}`
+              const active = simConfig.num_shoes === n
+              return (
+                <button key={n} onClick={() => updateSimConfig({ num_shoes: n })}
+                  className="flex-1 py-1 rounded-lg text-[10px] transition-all"
+                  style={{
+                    background: active ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.04)',
+                    border: `1px solid ${active ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                    color: active ? 'rgba(147,197,253,0.95)' : 'rgba(255,255,255,0.4)',
+                  }}>{label}</button>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
       {/* Run button */}
-      <div className="px-4 py-3 shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="px-4 pb-3 shrink-0">
         {isRunning ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-[10px]">

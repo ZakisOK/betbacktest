@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
-import { Download, BarChart2, TrendingUp, Shield, RefreshCw, Clock } from 'lucide-react'
+import { Download, BarChart2, TrendingUp, Shield, RefreshCw, Clock, Play, FlaskConical } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { EquityCurve } from './EquityCurve'
 import { PnLHistogram } from './PnLHistogram'
 import { MetricsPanel } from './MetricsPanel'
 import { RiskMetrics } from './RiskMetrics'
+import { PatternReviewer } from '../PatternReviewer'
 
 type Tab = 'overview' | 'distribution' | 'risk'
 
@@ -17,25 +18,40 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 export const ResultsPanel: React.FC = () => {
   const { backtestResults, previousResults, currentStrategy, runBacktest, isRunning } = useStore()
   const [tab, setTab] = useState<Tab>('overview')
+  const [showReviewer, setShowReviewer] = useState(false)
 
   if (!backtestResults) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center px-8">
-        <div className="text-6xl mb-5 opacity-20">📊</div>
-        <h3 className="text-white/80 font-bold text-base mb-2">No Results Yet</h3>
-        <p className="text-white/30 text-sm mb-6">
-          Configure a strategy and click{' '}
-          <span className="font-mono text-blue-400">Run Backtest</span>
-        </p>
-        <div className="glass p-4 text-left text-xs text-white/40 w-full max-w-xs space-y-1.5">
-          {['Build your strategy rules','Set simulation parameters','Run backtest','Get AI analysis'].map((s,i) => (
-            <div key={i} className="flex items-center gap-2">
-              <span className="w-4 h-4 rounded-full text-[9px] font-bold flex items-center justify-center shrink-0"
-                style={{ background:'rgba(99,102,241,0.3)', color:'rgba(167,139,250,0.9)' }}>{i+1}</span>
-              {s}
-            </div>
+      <div className="flex flex-col items-center justify-center h-full text-center px-6">
+        <div className="text-5xl mb-4 opacity-20">📊</div>
+        <h3 className="text-white/80 font-bold text-base mb-1">Results appear here</h3>
+        <p className="text-white/30 text-sm mb-6">Build a strategy and run a backtest to see performance metrics.</p>
+
+        {/* 3-step flow */}
+        <div className="flex items-center gap-2 mb-6 w-full max-w-xs">
+          {[
+            { n: '1', label: 'Build rules', sub: 'Strategy panel' },
+            { n: '2', label: 'Run backtest', sub: 'Bottom of panel' },
+            { n: '3', label: 'Analyse', sub: 'Here + AI Agent' },
+          ].map((step, i) => (
+            <React.Fragment key={step.n}>
+              <div className="flex-1 text-center">
+                <div className="w-7 h-7 rounded-full mx-auto mb-1 flex items-center justify-center text-xs font-bold"
+                  style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.35)', color: 'rgba(167,139,250,0.9)' }}>
+                  {step.n}
+                </div>
+                <div className="text-[11px] text-white/60 font-medium">{step.label}</div>
+                <div className="text-[9px] text-white/25">{step.sub}</div>
+              </div>
+              {i < 2 && <div className="text-white/15 text-sm shrink-0">→</div>}
+            </React.Fragment>
           ))}
         </div>
+
+        <button onClick={runBacktest} disabled={isRunning}
+          className="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
+          <Play size={13} fill="currentColor"/>Run with defaults
+        </button>
       </div>
     )
   }
@@ -52,6 +68,8 @@ export const ResultsPanel: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
+      {showReviewer && <PatternReviewer onClose={() => setShowReviewer(false)}/>}
+
       {/* Header */}
       <div className="px-4 pt-4 pb-3 shrink-0" style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center justify-between mb-1">
@@ -60,6 +78,11 @@ export const ResultsPanel: React.FC = () => {
             <span className="ml-2 text-[10px] text-white/30">v{currentStrategy.version}</span>
           </div>
           <div className="flex items-center gap-1">
+            <button onClick={() => setShowReviewer(true)} title="Analyse patterns"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"
+              style={{ background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)', color: 'rgba(74,222,128,0.85)' }}>
+              <FlaskConical size={10}/>Review
+            </button>
             <button onClick={handleExport} title="Export results"
               className="p-1.5 rounded-lg hover:bg-white/10 text-white/30 hover:text-white/70 transition-all">
               <Download size={13}/>

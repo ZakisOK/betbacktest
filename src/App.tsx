@@ -14,9 +14,9 @@ const EV_PILLS = [
 ]
 
 const NAV: { id: Panel; label: string; icon: React.ReactNode }[] = [
-  { id: 'builder', label: 'Strategy',    icon: <Layers size={13} /> },
-  { id: 'results', label: 'Results',     icon: <TrendingUp size={13} /> },
-  { id: 'agent',   label: 'Math Agent',  icon: <Bot size={13} /> },
+  { id: 'builder', label: 'Strategy',    icon: <Layers size={16} /> },
+  { id: 'results', label: 'Results',     icon: <TrendingUp size={16} /> },
+  { id: 'agent',   label: 'Math Agent',  icon: <Bot size={16} /> },
 ]
 
 export const App: React.FC = () => {
@@ -187,10 +187,11 @@ export const App: React.FC = () => {
           const active = activePanel === id
           return (
             <button key={id} onClick={() => setActivePanel(id)}
-              className="flex-1 flex flex-col items-center gap-1 py-3 text-[10px] font-medium transition-colors"
+              className="flex-1 flex flex-col items-center gap-1 py-3 text-[11px] font-medium transition-colors relative"
               style={{ color: active ? 'rgba(96,165,250,1)' : 'rgba(255,255,255,0.35)' }}
             >
               {icon}{label}
+              {active && <span className="absolute bottom-1.5 w-1 h-1 rounded-full bg-blue-400"/>}
             </button>
           )
         })}

@@ -112,16 +112,37 @@ export const RuleEditor: React.FC<Props> = ({ rule, onSave, onClose }) => {
               </div>
             </>}
             {action.type === 'adjust_unit' && <>
-              <F label="Progression">
-                <Sel value={action.method??'martingale'} onChange={e => uA({ method: e.target.value as ProgressionMethod })}>
-                  <option value="flat">Flat</option>
-                  <option value="martingale">Martingale (2×)</option>
-                  <option value="fibonacci">Fibonacci</option>
-                  <option value="dalembert">D'Alembert</option>
-                  <option value="labouchere">Labouchere</option>
-                  <option value="oscars_grind">Oscar's Grind</option>
-                  <option value="1326">1-3-2-6</option>
-                </Sel>
+              <F label="Progression — choose a betting system">
+                <div className="grid grid-cols-1 gap-1.5">
+                  {([
+                    { value: 'flat',         label: 'Flat',          risk: '🟢', desc: 'Same bet every hand. No escalation.' },
+                    { value: 'dalembert',    label: "D'Alembert",    risk: '🟡', desc: 'Increase 1 unit after loss, decrease after win.' },
+                    { value: '1326',         label: '1-3-2-6',       risk: '🟡', desc: 'Fixed sequence: 1→3→2→6 units on wins.' },
+                    { value: 'oscars_grind', label: "Oscar's Grind", risk: '🟡', desc: 'Raise bet 1 unit after win until +1 unit profit.' },
+                    { value: 'fibonacci',    label: 'Fibonacci',     risk: '🟡', desc: 'Follow 1,1,2,3,5,8… sequence after losses.' },
+                    { value: 'martingale',   label: 'Martingale',    risk: '🔴', desc: 'Double bet after each loss. High ruin risk.' },
+                    { value: 'labouchere',   label: 'Labouchere',    risk: '🔴', desc: 'Cancel first+last on win, add sum on loss.' },
+                  ] as const).map(prog => {
+                    const active = (action.method ?? 'martingale') === prog.value
+                    return (
+                      <button key={prog.value} type="button"
+                        onClick={() => uA({ method: prog.value as ProgressionMethod })}
+                        className="w-full text-left px-2.5 py-2 rounded-lg transition-all"
+                        style={{
+                          background: active ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+                          border: `1px solid ${active ? 'rgba(99,102,241,0.4)' : 'rgba(255,255,255,0.07)'}`,
+                        }}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-medium" style={{ color: active ? 'rgba(165,180,252,0.95)' : 'rgba(255,255,255,0.65)' }}>
+                            {prog.label}
+                          </span>
+                          <span className="text-[11px]">{prog.risk}</span>
+                        </div>
+                        <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{prog.desc}</div>
+                      </button>
+                    )
+                  })}
+                </div>
               </F>
               <F label="Multiplier / Value"><Inp type="number" min={0.1} step={0.1} value={action.value??2} onChange={e => uA({ value: +e.target.value })}/></F>
             </>}

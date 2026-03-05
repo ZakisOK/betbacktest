@@ -114,8 +114,7 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
               style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.12)' }}>
               <div className="flex gap-2 items-start">
                 <Info size={12} className="shrink-0 mt-0.5" style={{ color: 'rgba(251,191,36,0.6)' }}/>
-                Tries every combination of bet side, streak length, progression system, stop-loss, and take-profit.
-                Runs a fast backtest on each and ranks by your chosen metric. Load any winner into the Strategy Builder.
+                We'll test <strong className="text-white/60">640 strategy combinations</strong> across bet sides, streak lengths, and progressions. Each gets a fast backtest, then the top 20 are ranked by your chosen goal. Tap any result to load it instantly.
               </div>
             </div>
 
@@ -231,6 +230,7 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
           {phase === 'idle' && (
             <button onClick={start} className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 text-sm">
               <Zap size={13}/>Start Discovery
+              <span className="text-xs opacity-55 font-normal">~{shoes <= 50 ? '30s' : shoes <= 200 ? '2min' : '5min'}</span>
             </button>
           )}
           {phase === 'running' && (

@@ -147,7 +147,7 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
               <div className="flex items-start gap-2">
                 <Bot size={12} className="shrink-0 mt-0.5" style={{ color: 'rgba(167,139,250,0.7)' }}/>
                 <span className="text-white/50">
-                  Runs a <strong className="text-white/70">wide scan</strong> across selective-betting templates, then iteratively <strong className="text-white/70">mutates + deep-backtests</strong> around the best candidate. Uses Claude AI every 3rd iteration to guide parameter choices.
+                  The AI will automatically <strong className="text-white/70">test and refine strategies</strong> until it finds one that wins more than {Math.round(targetWinRate * 100)}% of hands played. Runs hundreds of simulations, mutates the best candidate each round, and asks Claude for guidance every 3rd iteration.
                 </span>
               </div>
             </div>
@@ -287,6 +287,7 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
             <button onClick={start}
               className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 text-sm">
               <Play size={13} fill="currentColor"/>Start Optimizer
+              <span className="text-xs opacity-55 font-normal">~{deepShoes <= 200 ? `${maxIter}min` : `${maxIter * 2}min`}</span>
             </button>
           )}
           {phase === 'running' && (
