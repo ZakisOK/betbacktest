@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import type { Rule, Trigger, Action, Modifiers, BetSide, ProgressionMethod } from '../../types'
+import type { Rule, Trigger, Action, Modifiers, BetSide, ProgressionMethod, FinancialCondition, TriggerType } from '../../types'
 
 interface Props { rule: Rule; onSave: (u: Partial<Rule>) => void; onClose: () => void }
 
@@ -21,15 +21,96 @@ const SECTION = (color: string, label: string) => (
     style={{ borderBottom: `1px solid ${color}30`, color }}>{label}</div>
 )
 
+const SubTriggerMini: React.FC<{
+  sub: Trigger
+  label: string
+  onChange: (u: Partial<Trigger>) => void
+}> = ({ sub, label, onChange }) => (
+  <div className="p-2.5 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+    <div className="text-[9px] font-mono font-bold text-white/40 mb-2 uppercase tracking-wider">{label}</div>
+    <div className="mb-2">
+      <div className="section-label mb-1">Type</div>
+      <Sel value={sub.type} onChange={e => onChange({ type: e.target.value as TriggerType })}>
+        <option value="streak">Streak</option>
+        <option value="financial_state">Financial State</option>
+        <option value="hand_count">Hand Count</option>
+        <option value="pattern">Pattern</option>
+      </Sel>
+    </div>
+    {sub.type === 'streak' && (
+      <div className="grid grid-cols-2 gap-1.5">
+        <div>
+          <div className="section-label mb-1">Side</div>
+          <Sel value={sub.side ?? 'Banker'} onChange={e => onChange({ side: e.target.value as BetSide })}>
+            <option value="Banker">Banker</option>
+            <option value="Player">Player</option>
+            <option value="Any">Any</option>
+          </Sel>
+        </div>
+        <div>
+          <div className="section-label mb-1">Min Length</div>
+          <Inp type="number" min={1} max={20} value={sub.min_length ?? 2}
+            onChange={e => onChange({ min_length: +e.target.value })}/>
+        </div>
+      </div>
+    )}
+    {sub.type === 'financial_state' && (
+      <div className="grid grid-cols-2 gap-1.5">
+        <div>
+          <div className="section-label mb-1">Condition</div>
+          <Sel value={sub.condition ?? 'session_loss'} onChange={e => onChange({ condition: e.target.value as FinancialCondition })}>
+            <option value="session_loss">Session Loss</option>
+            <option value="session_profit">Session Profit</option>
+            <option value="bankroll_below">Bankroll Below</option>
+            <option value="bankroll_above">Bankroll Above</option>
+          </Sel>
+        </div>
+        <div>
+          <div className="section-label mb-1">Threshold ($)</div>
+          <Inp type="number" value={sub.threshold ?? -200}
+            onChange={e => onChange({ threshold: +e.target.value })}/>
+        </div>
+      </div>
+    )}
+    {sub.type === 'hand_count' && (
+      <div>
+        <div className="section-label mb-1">Hand Min</div>
+        <Inp type="number" min={1} value={sub.hand_min ?? 1}
+          onChange={e => onChange({ hand_min: +e.target.value })}/>
+      </div>
+    )}
+    {sub.type === 'pattern' && (
+      <div>
+        <div className="section-label mb-1">Pattern</div>
+        <Inp value={sub.pattern ?? ''} placeholder="B-P-B-P"
+          onChange={e => onChange({ pattern: e.target.value })}/>
+      </div>
+    )}
+  </div>
+)
+
 export const RuleEditor: React.FC<Props> = ({ rule, onSave, onClose }) => {
   const [label,     setLabel]     = useState(rule.label)
-  const [trigger,   setTrigger]   = useState<Trigger>({ ...rule.trigger })
+  const [trigger,   setTrigger]   = useState<Trigger>(() => ({
+    operator: 'AND' as const,
+    sub_triggers: [
+      { type: 'streak' as const, side: 'Banker' as const, direction: 'consecutive_wins' as const, min_length: 2 },
+      { type: 'financial_state' as const, condition: 'session_loss' as const, threshold: -200 },
+    ],
+    ...rule.trigger,
+  }))
   const [action,    setAction]    = useState<Action>({ ...rule.action })
   const [modifiers, setModifiers] = useState<Modifiers>({ ...rule.modifiers })
 
   const uT = (u: Partial<Trigger>) => setTrigger(t => ({ ...t, ...u }))
   const uA = (u: Partial<Action>)  => setAction(a  => ({ ...a, ...u }))
   const uM = (u: Partial<Modifiers>) => setModifiers(m => ({ ...m, ...u }))
+  const uSub = (idx: number, u: Partial<Trigger>) =>
+    setTrigger(t => {
+      const subs = [...(t.sub_triggers ?? [])]
+      subs[idx] = { ...subs[idx], ...u }
+      return { ...t, sub_triggers: subs }
+    })
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter:'blur(8px)' }}>
@@ -85,6 +166,39 @@ export const RuleEditor: React.FC<Props> = ({ rule, onSave, onClose }) => {
               <div className="grid grid-cols-2 gap-2">
                 <F label="Hand Min"><Inp type="number" min={0} value={trigger.hand_min??1} onChange={e => uT({ hand_min: +e.target.value })}/></F>
                 <F label="Hand Max"><Inp type="number" min={0} value={trigger.hand_max??''} placeholder="∞" onChange={e => uT({ hand_max: e.target.value ? +e.target.value : undefined })}/></F>
+              </div>
+            </>}
+            {trigger.type === 'composite' && <>
+              <F label="Logic Operator">
+                <div className="flex gap-2">
+                  {(['AND', 'OR'] as const).map(op => (
+                    <button key={op} type="button"
+                      onClick={() => uT({ operator: op })}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      style={{
+                        background: trigger.operator === op ? 'rgba(20,184,166,0.2)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${trigger.operator === op ? 'rgba(20,184,166,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        color: trigger.operator === op ? 'rgba(94,234,212,0.9)' : 'rgba(255,255,255,0.4)',
+                      }}>
+                      {op}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                  {trigger.operator === 'AND' ? 'Both conditions must be true' : 'Either condition must be true'}
+                </p>
+              </F>
+              <div className="space-y-2">
+                <SubTriggerMini
+                  sub={trigger.sub_triggers?.[0] ?? { type: 'streak', side: 'Banker', direction: 'consecutive_wins', min_length: 2 }}
+                  label="Condition A"
+                  onChange={u => uSub(0, u)}
+                />
+                <SubTriggerMini
+                  sub={trigger.sub_triggers?.[1] ?? { type: 'financial_state', condition: 'session_loss', threshold: -200 }}
+                  label="Condition B"
+                  onChange={u => uSub(1, u)}
+                />
               </div>
             </>}
           </div>

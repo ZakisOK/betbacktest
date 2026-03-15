@@ -9,6 +9,7 @@ import type {
   AgentRecommendation,
   OptimizationConstraints,
   Theme,
+  ToastMessage,
 } from '../types'
 import { runSimulation } from '../engine/simulator'
 import { sendAgentRequest } from '../agent/mathAgent'
@@ -84,6 +85,11 @@ interface AppStore {
   isAgentThinking: boolean
   agentApiKeyConfigured: boolean
 
+  // Toasts
+  toasts: ToastMessage[]
+  showToast: (message: string, type?: ToastMessage['type']) => void
+  dismissToast: (id: string) => void
+
   // UI
   theme: Theme
   activePanel: 'builder' | 'results' | 'agent'
@@ -99,6 +105,7 @@ interface AppStore {
   saveStrategy: () => void
   deleteStrategy: (id: string) => void
   importStrategy: (json: string) => void
+  replaceRules: (rules: Omit<Rule, 'id' | 'priority'>[]) => void
 
   // Simulation actions
   updateSimConfig: (updates: Partial<SimulationConfig>) => void
@@ -132,8 +139,22 @@ export const useStore = create<AppStore>()(
       agentMessages: [],
       isAgentThinking: false,
       agentApiKeyConfigured: false,
+      toasts: [],
       theme: 'dark',
       activePanel: 'builder',
+
+      // ── Toasts ─────────────────────────────────────────────
+
+      showToast: (message, type = 'success') => {
+        const id = crypto.randomUUID()
+        set(s => ({ toasts: [...s.toasts, { id, message, type }] }))
+        setTimeout(() => {
+          set(s => ({ toasts: s.toasts.filter(t => t.id !== id) }))
+        }, 3000)
+      },
+
+      dismissToast: (id) =>
+        set(s => ({ toasts: s.toasts.filter(t => t.id !== id) })),
 
       // ── Strategy ───────────────────────────────────────────
 
@@ -251,6 +272,19 @@ export const useStore = create<AppStore>()(
           console.error('Failed to import strategy JSON')
         }
       },
+
+      replaceRules: (rulesData) =>
+        set(s => ({
+          currentStrategy: {
+            ...s.currentStrategy,
+            rules: rulesData.map((r, i) => ({
+              ...r,
+              id: crypto.randomUUID(),
+              priority: i + 1,
+            })),
+            updated_at: new Date().toISOString(),
+          },
+        })),
 
       // ── Simulation ─────────────────────────────────────────
 

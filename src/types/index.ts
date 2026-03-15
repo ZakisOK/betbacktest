@@ -249,3 +249,30 @@ export interface OptimizationConstraints {
 
 export type PanelTab = 'builder' | 'results' | 'agent'
 export type Theme = 'dark' | 'light'
+
+// ────────────────────────────────────────────────────────────
+// Toast notifications
+// ────────────────────────────────────────────────────────────
+
+export interface ToastMessage {
+  id: string
+  message: string
+  type: 'success' | 'error' | 'info'
+}
+
+// ────────────────────────────────────────────────────────────
+// Strategy Concept Builder
+// ────────────────────────────────────────────────────────────
+
+export type ConceptSuggestionType = 'warning' | 'consider' | 'alternative'
+
+export interface ConceptSuggestion {
+  type: ConceptSuggestionType
+  text: string
+}
+
+export interface ConceptBuilderResponse {
+  interpretation: string
+  rules: Omit<Rule, 'id' | 'priority'>[]
+  suggestions: ConceptSuggestion[]
+}

@@ -4,6 +4,7 @@ import { useStore } from './store/useStore'
 import { StrategyBuilder } from './components/StrategyBuilder'
 import { ResultsPanel } from './components/Results'
 import { MathAgent } from './components/MathAgent'
+import { ToastContainer } from './components/Toast'
 
 type Panel = 'builder' | 'results' | 'agent'
 
@@ -16,7 +17,7 @@ const EV_PILLS = [
 const NAV: { id: Panel; label: string; icon: React.ReactNode }[] = [
   { id: 'builder', label: 'Strategy',    icon: <Layers size={16} /> },
   { id: 'results', label: 'Results',     icon: <TrendingUp size={16} /> },
-  { id: 'agent',   label: 'Math Agent',  icon: <Bot size={16} /> },
+  { id: 'agent',   label: 'AI Analysis', icon: <Bot size={16} /> },
 ]
 
 export const App: React.FC = () => {
@@ -196,6 +197,8 @@ export const App: React.FC = () => {
           )
         })}
       </nav>
+
+      <ToastContainer />
 
       {/* ── Footer disclaimer ───────────────────────────────────── */}
       <div

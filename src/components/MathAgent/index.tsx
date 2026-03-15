@@ -128,7 +128,7 @@ export const MathAgent: React.FC = () => {
               <Bot size={13} style={{ color:'rgba(167,139,250,0.9)' }}/>
             </div>
             <div>
-              <div className="text-xs font-bold text-white/90">Math Agent</div>
+              <div className="text-xs font-bold text-white/90">AI Analysis</div>
               <div className="text-[9px]" style={{ color:'rgba(255,255,255,0.3)' }}>Baccarat Mathematics Expert</div>
             </div>
           </div>

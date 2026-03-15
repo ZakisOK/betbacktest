@@ -5,6 +5,7 @@ import { RuleCard } from './RuleCard'
 import { SimConfig } from './SimulationConfig'
 import { DiscoveryPanel } from '../Discovery'
 import { AutoOptimizerPanel } from '../AutoOptimizer'
+import { StrategyConceptBuilder } from './StrategyConceptBuilder'
 import type { Rule } from '../../types'
 import { parseNLRule } from '../../utils/nlRuleParser'
 
@@ -20,15 +21,16 @@ export const StrategyBuilder: React.FC = () => {
     currentStrategy, simConfig, isRunning, progress, savedStrategies,
     updateStrategyMeta, addRule, updateRule, removeRule, moveRule, duplicateRule,
     updateSimConfig, runBacktest, cancelBacktest, saveStrategy, loadStrategy,
-    deleteStrategy, importStrategy,
+    deleteStrategy, importStrategy, showToast,
   } = useStore()
 
-  const [showSimConfig,    setShowSimConfig]    = useState(false)
-  const [showLibrary,      setShowLibrary]      = useState(false)
-  const [editingName,      setEditingName]      = useState(false)
-  const [showDiscovery,    setShowDiscovery]    = useState(false)
-  const [showAutoOptimizer,setShowAutoOptimizer] = useState(false)
-  const [showUtilMenu,     setShowUtilMenu]     = useState(false)
+  const [showSimConfig,      setShowSimConfig]      = useState(false)
+  const [showLibrary,        setShowLibrary]        = useState(false)
+  const [editingName,        setEditingName]        = useState(false)
+  const [showDiscovery,      setShowDiscovery]      = useState(false)
+  const [showAutoOptimizer,  setShowAutoOptimizer]  = useState(false)
+  const [showConceptBuilder, setShowConceptBuilder] = useState(false)
+  const [showUtilMenu,       setShowUtilMenu]       = useState(false)
 
   // Natural language input state
   const [nlText, setNlText]         = useState('')
@@ -36,8 +38,8 @@ export const StrategyBuilder: React.FC = () => {
   const [nlMessage, setNlMessage]   = useState('')
   const nlRef = useRef<HTMLInputElement>(null)
 
-  const handleNLSubmit = async () => {
-    const text = nlText.trim()
+  const handleNLSubmit = async (overrideText?: string) => {
+    const text = (overrideText ?? nlText).trim()
     if (!text) return
     setNlStatus('parsing')
     setNlMessage('Parsing…')
@@ -80,8 +82,9 @@ export const StrategyBuilder: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {showDiscovery     && <DiscoveryPanel onClose={() => setShowDiscovery(false)}/>}
-      {showAutoOptimizer && <AutoOptimizerPanel onClose={() => setShowAutoOptimizer(false)}/>}
+      {showDiscovery      && <DiscoveryPanel onClose={() => setShowDiscovery(false)}/>}
+      {showAutoOptimizer  && <AutoOptimizerPanel onClose={() => setShowAutoOptimizer(false)}/>}
+      {showConceptBuilder && <StrategyConceptBuilder onClose={() => setShowConceptBuilder(false)}/>}
 
       {/* Header */}
       <div className="px-4 pt-4 pb-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -113,6 +116,12 @@ export const StrategyBuilder: React.FC = () => {
               style={{ background: 'rgba(251,191,36,0.10)', border: '1px solid rgba(251,191,36,0.25)', color: 'rgba(252,211,77,0.9)' }}>
               <Zap size={10}/>Discover
             </button>
+            {/* Concept Builder pill */}
+            <button onClick={() => setShowConceptBuilder(true)}
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold transition-all"
+              style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.25)', color: 'rgba(165,180,252,0.9)' }}>
+              <Sparkles size={10}/>Concept
+            </button>
             {/* ⋯ utility overflow */}
             <div className="relative">
               <button onClick={() => setShowUtilMenu(!showUtilMenu)}
@@ -125,7 +134,7 @@ export const StrategyBuilder: React.FC = () => {
                   {[
                     { icon: <Upload size={11}/>,    label: 'Import JSON',     fn: handleImport },
                     { icon: <Download size={11}/>,  label: 'Export JSON',     fn: handleExport },
-                    { icon: <Save size={11}/>,      label: 'Save to Library', fn: saveStrategy },
+                    { icon: <Save size={11}/>,      label: 'Save to Library', fn: () => { saveStrategy(); showToast(`"${currentStrategy.name}" saved to library`) } },
                     { icon: <FolderOpen size={11}/>,label: 'Open Library',    fn: () => { setShowLibrary(!showLibrary); setShowUtilMenu(false) } },
                   ].map(({ icon, label, fn }) => (
                     <button key={label} onClick={() => { fn(); setShowUtilMenu(false) }}
@@ -211,7 +220,7 @@ export const StrategyBuilder: React.FC = () => {
               }}
             />
             <button
-              onClick={handleNLSubmit}
+              onClick={() => handleNLSubmit()}
               disabled={!nlText.trim() || nlStatus === 'parsing'}
               className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium transition-all"
               style={{ background: 'rgba(99,102,241,0.25)', color: 'rgba(165,180,252,0.9)' }}
@@ -237,7 +246,7 @@ export const StrategyBuilder: React.FC = () => {
               'Stop loss at $500',
               'Skip 2 hands after tie',
             ].map(ex => (
-              <button key={ex} onClick={() => { setNlText(ex); nlRef.current?.focus() }}
+              <button key={ex} onClick={() => { setNlText(ex); handleNLSubmit(ex) }}
                 className="text-[9px] px-1.5 py-0.5 rounded-md transition-colors"
                 style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.07)' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}
