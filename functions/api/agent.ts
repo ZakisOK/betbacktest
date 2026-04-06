@@ -1,13 +1,11 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+interface Env {
+  VITE_SUPABASE_URL: string
+  SUPABASE_SERVICE_ROLE_KEY: string
+  ANTHROPIC_API_KEY: string
+}
 
 const TIER_LIMITS: Record<string, number> = {
   free: 5,
@@ -15,17 +13,18 @@ const TIER_LIMITS: Record<string, number> = {
   lab: Infinity,
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-
-  const authHeader = req.headers.authorization
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const authHeader = request.headers.get('authorization')
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Missing authorization header' })
+    return Response.json({ error: 'Missing authorization header' }, { status: 401 })
   }
+
+  const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
+  const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
 
   const token = authHeader.slice(7)
   const { data: { user }, error: authError } = await supabase.auth.getUser(token)
-  if (authError || !user) return res.status(401).json({ error: 'Invalid token' })
+  if (authError || !user) return Response.json({ error: 'Invalid token' }, { status: 401 })
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -33,12 +32,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .eq('id', user.id)
     .single()
 
-  if (!profile) return res.status(404).json({ error: 'Profile not found' })
+  if (!profile) return Response.json({ error: 'Profile not found' }, { status: 404 })
 
   const today = new Date().toISOString().split('T')[0]
   let queriesUsed = profile.ai_queries_today
 
-  // Reset if date changed
   if (profile.ai_queries_reset_at < today) {
     queriesUsed = 0
     await supabase
@@ -49,10 +47,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const limit = TIER_LIMITS[profile.subscription_tier] ?? 5
   if (queriesUsed >= limit) {
-    return res.status(429).json({ error: 'AI query limit reached', tier: profile.subscription_tier, limit })
+    return Response.json(
+      { error: 'AI query limit reached', tier: profile.subscription_tier, limit },
+      { status: 429 }
+    )
   }
 
-  const { messages, strategy, backtestResults } = req.body as {
+  const body = await request.json() as {
     messages: Array<{ role: 'user' | 'assistant'; content: string }>
     strategy?: unknown
     backtestResults?: unknown
@@ -75,18 +76,17 @@ When analyzing strategies, always structure your response with these sections:
 **HONESTY SCORE**: X/10 (10 = completely honest about house edge reality)
 
 Be direct and honest. No betting system eliminates the house edge.
-Current strategy context: ${JSON.stringify(strategy ?? {})}
-Backtest results context: ${JSON.stringify(backtestResults ?? {})}`
+Current strategy context: ${JSON.stringify(body.strategy ?? {})}
+Backtest results context: ${JSON.stringify(body.backtestResults ?? {})}`
 
   try {
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,
       system: systemPrompt,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+      messages: body.messages.map((m) => ({ role: m.role, content: m.content })),
     })
 
-    // Increment query counter
     await supabase
       .from('profiles')
       .update({ ai_queries_today: queriesUsed + 1 })
@@ -94,9 +94,16 @@ Backtest results context: ${JSON.stringify(backtestResults ?? {})}`
 
     const content = response.content[0]
     const text = content.type === 'text' ? content.text : ''
-    return res.status(200).json({ content: text })
+    return Response.json({ content: text })
   } catch (err) {
     console.error('Claude API error:', err)
-    return res.status(500).json({ error: 'AI request failed' })
+    return Response.json({ error: 'AI request failed' }, { status: 500 })
   }
+}
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  if (context.request.method !== 'POST') {
+    return new Response('Method not allowed', { status: 405 })
+  }
+  return onRequestPost(context)
 }

@@ -1,27 +1,26 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createClient } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+interface Env {
+  VITE_SUPABASE_URL: string
+  SUPABASE_SERVICE_ROLE_KEY: string
+  ANTHROPIC_API_KEY: string
+}
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
-
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') return res.status(405).end()
-
-  const { userId, strategyConfig, metrics, orderId } = req.body as {
+export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  const body = await request.json() as {
     userId: string
     strategyConfig?: unknown
     metrics?: unknown
     orderId: string
   }
 
-  if (!userId || !orderId) return res.status(400).json({ error: 'Missing required fields' })
+  const { userId, strategyConfig, metrics, orderId } = body
+  if (!userId || !orderId) return Response.json({ error: 'Missing required fields' }, { status: 400 })
 
-  // Mark as generating
+  const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY)
+  const anthropic = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+
   await supabase
     .from('reports')
     .update({ status: 'generating' })
@@ -62,7 +61,6 @@ Generate the full HTML report now.`,
     const content = response.content[0]
     const htmlContent = content.type === 'text' ? content.text : '<p>Analysis unavailable.</p>'
 
-    // Wrap in full HTML document
     const fullHtml = `<!DOCTYPE html>
 <html>
 <head>
@@ -90,21 +88,19 @@ ${htmlContent}
 </body>
 </html>`
 
-    // Upload to Supabase Storage
     const reportId = crypto.randomUUID()
     const path = `${userId}/${reportId}.html`
     await supabase.storage
       .from('reports')
       .upload(path, fullHtml, { contentType: 'text/html' })
 
-    // Update report record
     await supabase
       .from('reports')
       .update({ status: 'ready', pdf_path: path })
       .eq('user_id', userId)
       .eq('order_id', orderId)
 
-    return res.status(200).json({ ok: true, reportId })
+    return Response.json({ ok: true, reportId })
   } catch (err) {
     console.error('Report generation error:', err)
     await supabase
@@ -112,6 +108,11 @@ ${htmlContent}
       .update({ status: 'failed' })
       .eq('user_id', userId)
       .eq('order_id', orderId)
-    return res.status(500).json({ error: 'Report generation failed' })
+    return Response.json({ error: 'Report generation failed' }, { status: 500 })
   }
+}
+
+export const onRequest: PagesFunction<Env> = async (context) => {
+  if (context.request.method !== 'POST') return new Response('Method not allowed', { status: 405 })
+  return onRequestPost(context)
 }
