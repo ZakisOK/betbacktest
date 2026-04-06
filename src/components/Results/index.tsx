@@ -1,11 +1,17 @@
 import React, { useState } from 'react'
-import { Download, BarChart2, TrendingUp, Shield, RefreshCw, Clock, Play, FlaskConical } from 'lucide-react'
+import { Download, BarChart2, TrendingUp, Shield, RefreshCw, Clock, Play, FlaskConical, Crown, ExternalLink, FileText } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { EquityCurve } from './EquityCurve'
 import { PnLHistogram } from './PnLHistogram'
 import { MetricsPanel } from './MetricsPanel'
 import { RiskMetrics } from './RiskMetrics'
 import { PatternReviewer } from '../PatternReviewer'
+import { AdSlot } from '../AdSlot'
+import { openCheckout, VARIANT_IDS } from '../../lib/lemonsqueezy'
+
+// Geo filter for affiliate CTA — rough proxy using browser language
+const BLOCKED_LANG_PREFIXES = ['zh', 'hi', 'id', 'ar', 'ur', 'bn', 'sg']
+const showAffiliateForLocale = !BLOCKED_LANG_PREFIXES.some((p) => navigator.language.toLowerCase().startsWith(p))
 
 type Tab = 'overview' | 'distribution' | 'risk'
 
@@ -16,9 +22,10 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 ]
 
 export const ResultsPanel: React.FC = () => {
-  const { backtestResults, previousResults, currentStrategy, runBacktest, isRunning } = useStore()
+  const { backtestResults, previousResults, currentStrategy, runBacktest, isRunning, user, setShowUpgradeModal } = useStore()
   const [tab, setTab] = useState<Tab>('overview')
   const [showReviewer, setShowReviewer] = useState(false)
+  const tier = user?.subscription_tier ?? 'free'
 
   if (!backtestResults) {
     return (
@@ -66,9 +73,30 @@ export const ResultsPanel: React.FC = () => {
     URL.revokeObjectURL(url)
   }
 
+  function handleReportPurchase() {
+    if (!user) return
+    openCheckout(VARIANT_IDS.report, user)
+  }
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {showReviewer && <PatternReviewer onClose={() => setShowReviewer(false)}/>}
+
+      {/* Upgrade banner — free tier only */}
+      {tier === 'free' && backtestResults && (
+        <div
+          className="flex items-center justify-between px-4 py-2 text-xs shrink-0"
+          style={{ background: 'rgba(99,102,241,0.1)', borderBottom: '1px solid rgba(99,102,241,0.2)' }}
+        >
+          <span className="text-white/50">Unlock full risk metrics and AI analysis.</span>
+          <button
+            onClick={() => setShowUpgradeModal(true)}
+            className="flex items-center gap-1 text-violet-400 hover:text-violet-300 font-medium transition-colors"
+          >
+            <Crown size={11} /> Upgrade to Pro — $19/mo
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="px-4 pt-4 pb-3 shrink-0" style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
@@ -160,10 +188,35 @@ export const ResultsPanel: React.FC = () => {
 
         {tab === 'risk' && (
           <div className="space-y-5">
-            <div className="glass p-3"><RiskMetrics results={r} previous={previousResults}/></div>
+            {/* Blur risk metrics for free tier */}
+            <div className={tier === 'free' ? 'relative' : ''}>
+              {tier === 'free' && (
+                <div
+                  className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl gap-2"
+                  style={{ backdropFilter: 'blur(6px)', background: 'rgba(2,8,23,0.5)' }}
+                >
+                  <Crown size={20} className="text-violet-400" />
+                  <p className="text-sm font-semibold text-white">Pro feature</p>
+                  <p className="text-xs text-white/40">Upgrade to unlock risk metrics</p>
+                  <button
+                    onClick={() => setShowUpgradeModal(true)}
+                    className="btn-primary text-xs px-4 py-1.5 rounded-lg mt-1"
+                  >
+                    Upgrade to Pro
+                  </button>
+                </div>
+              )}
+              <div className="glass p-3"><RiskMetrics results={r} previous={previousResults}/></div>
+            </div>
 
             {/* Risk table */}
-            <div className="glass p-3">
+            <div className={`glass p-3 ${tier === 'free' ? 'relative' : ''}`}>
+              {tier === 'free' && (
+                <div
+                  className="absolute inset-0 z-10 flex items-center justify-center rounded-xl"
+                  style={{ backdropFilter: 'blur(4px)', background: 'rgba(2,8,23,0.5)' }}
+                />
+              )}
               <p className="section-label mb-3">Risk Summary</p>
               <div className="space-y-2">
                 {[
@@ -190,6 +243,48 @@ export const ResultsPanel: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* ── Deep Analysis Report button (all tiers) ── */}
+        <div
+          className="mt-4 p-3 rounded-xl flex items-center justify-between gap-3"
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div>
+            <div className="text-xs font-semibold text-white/70 flex items-center gap-1.5">
+              <FileText size={12} className="text-blue-400" /> Deep Analysis Report
+            </div>
+            <div className="text-[10px] text-white/30 mt-0.5">3,000-token AI analysis with EV tables, Monte Carlo CIs, and 5 specific recommendations</div>
+          </div>
+          <button
+            onClick={handleReportPurchase}
+            className="btn-primary text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shrink-0"
+          >
+            $4.99
+          </button>
+        </div>
+
+        {/* ── Affiliate CTA (geo-filtered, post-backtest only) ── */}
+        {showAffiliateForLocale && (
+          <div
+            className="mt-3 p-3 rounded-xl flex items-center justify-between gap-3"
+            style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <div className="flex-1">
+              <button
+                onClick={() => window.open(import.meta.env.VITE_AFFILIATE_URL as string, '_blank')}
+                className="flex items-center gap-1.5 text-xs text-white/50 hover:text-white/70 transition-colors"
+              >
+                Try this strategy at a live table <ExternalLink size={10} />
+              </button>
+              <p className="text-[9px] text-white/20 mt-0.5">Partner link · Commission earned on sign-up · 18+ only · Gamble responsibly</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── Ad slot (free tier only) ── */}
+        <div className="mt-3">
+          <AdSlot adUnitId="ad-results-footer" size="728x90" />
+        </div>
       </div>
     </div>
   )
