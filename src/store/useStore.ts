@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from '../lib/supabase'
 import type {
   Strategy,
   Rule,
@@ -11,8 +13,21 @@ import type {
   Theme,
   ToastMessage,
 } from '../types'
+import type { SubscriptionTier, SubscriptionStatus } from '../lib/supabase'
 import { runSimulation } from '../engine/simulator'
 import { sendAgentRequest } from '../agent/mathAgent'
+
+export interface AuthUser {
+  id: string
+  email: string
+  display_name: string | null
+  avatar_url: string | null
+  subscription_tier: SubscriptionTier
+  subscription_status: SubscriptionStatus
+  subscription_ends_at: string | null
+  ai_queries_today: number
+  lemon_subscription_id: string | null
+}
 
 const DEFAULT_STRATEGY: Strategy = {
   id: crypto.randomUUID(),
@@ -69,6 +84,20 @@ const DEFAULT_SIM_CONFIG: SimulationConfig = {
 }
 
 interface AppStore {
+  // Auth
+  user: AuthUser | null
+  session: Session | null
+  authLoading: boolean
+  showUpgradeModal: boolean
+  setUser: (user: AuthUser | null) => void
+  setSession: (session: Session | null) => void
+  setAuthLoading: (loading: boolean) => void
+  setShowUpgradeModal: (show: boolean) => void
+  incrementAiQueries: () => void
+  refetchProfile: () => Promise<void>
+  pendingMigration: Strategy[] | null
+  clearPendingMigration: () => void
+
   // Strategy
   currentStrategy: Strategy
   savedStrategies: Strategy[]
@@ -129,6 +158,48 @@ let cancelSimulation = false
 export const useStore = create<AppStore>()(
   persist(
     (set, get) => ({
+      // Auth
+      user: null,
+      session: null,
+      authLoading: true,
+      showUpgradeModal: false,
+
+      pendingMigration: null,
+      clearPendingMigration: () => set({ pendingMigration: null }),
+
+      setUser: (user) => set({ user }),
+      setSession: (session) => set({ session }),
+      setAuthLoading: (authLoading) => set({ authLoading }),
+      setShowUpgradeModal: (showUpgradeModal) => set({ showUpgradeModal }),
+
+      incrementAiQueries: () =>
+        set((s) => s.user ? { user: { ...s.user, ai_queries_today: s.user.ai_queries_today + 1 } } : {}),
+
+      refetchProfile: async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single()
+        if (profile) {
+          set({
+            user: {
+              id: profile.id,
+              email: profile.email,
+              display_name: profile.display_name,
+              avatar_url: profile.avatar_url,
+              subscription_tier: profile.subscription_tier,
+              subscription_status: profile.subscription_status,
+              subscription_ends_at: profile.subscription_ends_at,
+              ai_queries_today: profile.ai_queries_today,
+              lemon_subscription_id: profile.lemon_subscription_id,
+            },
+          })
+        }
+      },
+
       currentStrategy: DEFAULT_STRATEGY,
       savedStrategies: [],
       simConfig: DEFAULT_SIM_CONFIG,
