@@ -31,43 +31,11 @@ export interface AuthUser {
 
 const DEFAULT_STRATEGY: Strategy = {
   id: crypto.randomUUID(),
-  name: 'Banker Follow Progressive',
+  name: 'My Strategy',
   version: '1.0',
   base_unit: 25,
   bankroll: 5000,
-  rules: [
-    {
-      id: crypto.randomUUID(),
-      priority: 1,
-      enabled: true,
-      label: 'Bet Banker (default)',
-      trigger: { type: 'hand_count', hand_min: 1 },
-      action: { type: 'place_bet', side: 'Banker', unit_size: 1 },
-      modifiers: { max_bet: 500, shoe_reset: 'reset' },
-    },
-    {
-      id: crypto.randomUUID(),
-      priority: 2,
-      enabled: true,
-      label: 'Double after 2 consecutive losses',
-      trigger: { type: 'streak', side: 'Banker', min_length: 2, direction: 'consecutive_losses' },
-      action: { type: 'adjust_unit', method: 'martingale', value: 2 },
-      modifiers: { max_bet: 400, bankroll_guard: 0.1 },
-    },
-    {
-      id: crypto.randomUUID(),
-      priority: 3,
-      enabled: true,
-      label: 'Stop loss at -500 units',
-      trigger: {
-        type: 'financial_state',
-        condition: 'session_loss',
-        threshold: -500,
-      },
-      action: { type: 'stop_loss', threshold: -500 },
-      modifiers: {},
-    },
-  ],
+  rules: [],
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 }
