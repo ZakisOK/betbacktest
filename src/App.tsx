@@ -313,7 +313,7 @@ function Dashboard() {
 }
 
 function AuthGate() {
-  const { user, authLoading, pendingMigration } = useStore()
+  const { user, authLoading, setAuthLoading, pendingMigration } = useStore()
   useAuth()
 
   useEffect(() => {
@@ -323,7 +323,14 @@ function AuthGate() {
       localStorage.setItem('bb_unlocked', 'true')
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [])
+    // Safety timeout: never hang on loading spinner for more than 5s
+    const timeout = setTimeout(() => {
+      if (useStore.getState().authLoading) {
+        setAuthLoading(false)
+      }
+    }, 5000)
+    return () => clearTimeout(timeout)
+  }, [setAuthLoading])
 
   const isUnlocked = localStorage.getItem('bb_unlocked') === 'true'
   if (!isUnlocked) return <ComingSoon />
