@@ -1,0 +1,107 @@
+z_code:
+  spec_version: '0.1'
+  manifest_version: 1
+harness:
+  package: harness
+  owner: ZakisOK
+  monthly_budget_hours: 2.0
+target:
+  repo: https://github.com/ZakisOK/betbacktest
+  workspace_layout: meta-repo
+  packages:
+  - name: baccarat-strategy-dashboard
+    map: AGENTS.md
+    traffic: medium
+runtimes:
+- name: claude-code
+  version: 2.1.201
+  pinned: true
+- name: kiro-cli
+  version: 2.27.1
+  pinned: true
+context:
+  map_line_budget: 100
+  map_token_budget:
+  - 300
+  - 800
+  cold_start_token_budget: 6000
+  reference_tokenizer: z_code.tokens.whitespace-v1
+  docs_tree: harness/docs/
+  router: harness/docs/ROUTER.md
+  freshness_ci:
+    hash_drift: true
+    inventory_count: true
+    token_budget_check: true
+enforcement:
+  invariants_dir: harness/rules/
+  filter_chain:
+    unit_test_consecutive_passes: 5
+    integration_invocations: 20
+    integration_runs: 3
+    integration_window_hours: 24
+    coverage_improvement_required: false
+    bugfix_fails_before_check: true
+  test_surface_diff: block
+  false_positive_budget_per_rule_monthly: 4
+  emergency_bypass_ttl_hours: 72
+  protected_surface:
+  - '**/AGENTS.md'
+  - z-code.yaml
+  - .github/workflows/
+  - supabase/
+  - functions/api/webhooks/
+review:
+  reviewer_enabled: false
+  decorrelation:
+    level: prompt-only
+    seeded_defects: harness/review/seeded-defects/
+    last_passed: '1970-01-01'
+  findings_schema: harness/review/findings-schema.json
+  calibration_set: harness/review/calibration/
+  calibration_last_verified: '1970-01-01'
+  calibration_max_age_days: 90
+  egress_policy: source code may go to the agent runtime's model provider; .env files,
+    keys and user data from Supabase never leave the machine
+evaluation:
+  bench_dir: harness/bench/
+  scenarios: 1
+  split:
+    tuning: 1
+    held_out: 0
+  pass_rule: 2-of-3
+  security_pass_rule: 3-of-3
+  cost_cap_percent: 25
+  provenance:
+  - harness_version
+  - runtime_version
+  - model_version
+  trajectory_checks: true
+  last_verified: '1970-01-01'
+  max_age_days: 180
+learning:
+  enabled: false
+  entry_gate: layer4_live
+  exit_gate: ablation-no-regression
+  corrections_capture:
+    enabled: true
+    staging: harness/learning/staged-corrections/
+    adoption_cadence: monthly
+lane:
+  outcome_taxonomy:
+  - DECLINED
+  - PARTIAL
+  - FAILED
+  - SUCCEEDED
+  baseline_gate: true
+  staging_manifest: true
+  heartbeats:
+    interval_minutes: 10
+tickets:
+  tracker: GitHub pull requests plus the Vault spec betbacktest-finish.md; no issue
+    tracker in use
+  template: harness/templates/ticket-template.md
+  backfilled_marked: true
+conformance:
+  current: G0
+  target: G0
+  audit_report: harness/reports/gap-report.md
