@@ -53,13 +53,6 @@ export const EquityCurve: React.FC<Props> = ({ results }) => {
   const maxVal = Math.max(...metrics.bankroll_series)
   const isPositive = metrics.net_pnl >= 0
 
-  // Confidence bands (±1 std dev of shoe P&L)
-  const shoePnls = metrics.shoe_pnl_series
-  const meanPnl = shoePnls.reduce((s, v) => s + v, 0) / shoePnls.length
-  const stdPnl = Math.sqrt(
-    shoePnls.reduce((s, v) => s + (v - meanPnl) ** 2, 0) / shoePnls.length
-  )
-
   return (
     <div className="w-full">
       {/* Title row */}

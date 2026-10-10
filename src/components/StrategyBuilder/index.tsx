@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Plus, Play, Save, Upload, Download, FolderOpen, X, Loader2, ChevronDown, ChevronRight, Sliders, Sparkles, Check, AlertCircle, Zap, Bot, MoreHorizontal } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import { RuleCard } from './RuleCard'
@@ -14,6 +14,16 @@ const DEFAULT_NEW_RULE: Omit<Rule, 'id' | 'priority'> = {
   trigger: { type: 'hand_count', hand_min: 1 },
   action: { type: 'place_bet', side: 'Banker', unit_size: 1 },
   modifiers: { shoe_reset: 'reset' },
+}
+
+type NlStatus = 'idle' | 'parsing' | 'ok' | 'ai' | 'error'
+
+const NL_STATUS_COLORS: Record<NlStatus, { icon: string; border?: string; message: string }> = {
+  idle:    { icon: 'rgba(99,102,241,0.6)',  message: 'rgba(74,222,128,0.8)' },
+  parsing: { icon: 'rgba(99,102,241,0.6)',  message: 'rgba(74,222,128,0.8)' },
+  ok:      { icon: 'rgba(74,222,128,0.8)',  border: 'rgba(74,222,128,0.3)',  message: 'rgba(74,222,128,0.8)' },
+  ai:      { icon: 'rgba(167,139,250,0.9)', border: 'rgba(74,222,128,0.3)',  message: 'rgba(167,139,250,0.9)' },
+  error:   { icon: 'rgba(248,113,113,0.7)', border: 'rgba(248,113,113,0.3)', message: 'rgba(248,113,113,0.8)' },
 }
 
 export const StrategyBuilder: React.FC = () => {
@@ -34,9 +44,16 @@ export const StrategyBuilder: React.FC = () => {
 
   // Natural language input state
   const [nlText, setNlText]         = useState('')
-  const [nlStatus, setNlStatus]     = useState<'idle' | 'parsing' | 'ok' | 'ai' | 'error'>('idle')
+  const [nlStatus, setNlStatus]     = useState<NlStatus>('idle')
   const [nlMessage, setNlMessage]   = useState('')
   const nlRef = useRef<HTMLInputElement>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
+  const nlColors = NL_STATUS_COLORS[nlStatus]
+
+  // The name field only appears after a click on the name, so focus follows it.
+  useEffect(() => {
+    if (editingName) nameRef.current?.focus()
+  }, [editingName])
 
   const handleNLSubmit = async (overrideText?: string) => {
     const text = (overrideText ?? nlText).trim()
@@ -49,11 +66,8 @@ export const StrategyBuilder: React.FC = () => {
       setNlText('')
       setNlStatus(result.method === 'ai' ? 'ai' : 'ok')
       const n = result.rules.length
-      setNlMessage(
-        result.method === 'ai'
-          ? `${n} rule${n > 1 ? 's' : ''} added via AI ✦`
-          : `${n} rule${n > 1 ? 's' : ''} added!`
-      )
+      const rules = n > 1 ? 'rules' : 'rule'
+      setNlMessage(result.method === 'ai' ? `${n} ${rules} added via AI ✦` : `${n} ${rules} added!`)
       setTimeout(() => { setNlStatus('idle'); setNlMessage('') }, 2000)
     } else {
       setNlStatus('error')
@@ -75,7 +89,9 @@ export const StrategyBuilder: React.FC = () => {
     inp.type = 'file'; inp.accept = '.json'
     inp.onchange = e => {
       const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return
-      const r = new FileReader(); r.onload = ev => importStrategy(ev.target?.result as string); r.readAsText(f)
+      f.text()
+        .then(importStrategy)
+        .catch(() => showToast(`Could not read ${f.name}`, 'error'))
     }
     inp.click()
   }
@@ -90,7 +106,7 @@ export const StrategyBuilder: React.FC = () => {
       <div className="px-4 pt-4 pb-3 shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-2 mb-3">
           {editingName ? (
-            <input autoFocus value={currentStrategy.name}
+            <input ref={nameRef} value={currentStrategy.name}
               onChange={e => updateStrategyMeta({ name: e.target.value })}
               onBlur={() => setEditingName(false)}
               onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
@@ -203,7 +219,7 @@ export const StrategyBuilder: React.FC = () => {
           <div className="relative">
             <Sparkles size={12}
               className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
-              style={{ color: nlStatus === 'error' ? 'rgba(248,113,113,0.7)' : nlStatus === 'ok' ? 'rgba(74,222,128,0.8)' : nlStatus === 'ai' ? 'rgba(167,139,250,0.9)' : 'rgba(99,102,241,0.6)' }}
+              style={{ color: nlColors.icon }}
             />
             <input
               ref={nlRef}
@@ -213,11 +229,7 @@ export const StrategyBuilder: React.FC = () => {
               placeholder='Describe a rule… e.g. "bet Banker after 3 wins"'
               disabled={nlStatus === 'parsing'}
               className="input-glass w-full pl-7 pr-16 py-2 text-xs placeholder:text-white/20"
-              style={{
-                borderColor: nlStatus === 'error' ? 'rgba(248,113,113,0.3)'
-                           : nlStatus === 'ok' || nlStatus === 'ai' ? 'rgba(74,222,128,0.3)'
-                           : undefined,
-              }}
+              style={{ borderColor: nlColors.border }}
             />
             <button
               onClick={() => handleNLSubmit()}
@@ -233,7 +245,7 @@ export const StrategyBuilder: React.FC = () => {
               {nlStatus === 'error'
                 ? <AlertCircle size={10} className="text-red-400 shrink-0"/>
                 : <Check size={10} className="text-emerald-400 shrink-0"/>}
-              <span className="text-[10px]" style={{ color: nlStatus === 'error' ? 'rgba(248,113,113,0.8)' : nlStatus === 'ai' ? 'rgba(167,139,250,0.9)' : 'rgba(74,222,128,0.8)' }}>
+              <span className="text-[10px]" style={{ color: nlColors.message }}>
                 {nlMessage}
               </span>
             </div>
@@ -246,7 +258,7 @@ export const StrategyBuilder: React.FC = () => {
               'Stop loss at $500',
               'Skip 2 hands after tie',
             ].map(ex => (
-              <button key={ex} onClick={() => { setNlText(ex); handleNLSubmit(ex) }}
+              <button key={ex} onClick={() => { setNlText(ex); void handleNLSubmit(ex) }}
                 className="text-[9px] px-1.5 py-0.5 rounded-md transition-colors"
                 style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.07)' }}
                 onMouseEnter={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.6)')}

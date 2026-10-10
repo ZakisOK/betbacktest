@@ -8,6 +8,7 @@ import { RiskMetrics } from './RiskMetrics'
 import { PatternReviewer } from '../PatternReviewer'
 import { AdSlot } from '../AdSlot'
 import { openCheckout, VARIANT_IDS } from '../../lib/lemonsqueezy'
+import type { BacktestResults } from '../../types'
 
 // Geo filter for affiliate CTA — rough proxy using browser language
 const BLOCKED_LANG_PREFIXES = ['zh', 'hi', 'id', 'ar', 'ur', 'bn', 'sg']
@@ -21,6 +22,81 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id:'risk',          label:'Risk Profile',  icon:<Shield size={11}/> },
 ]
 
+type Grade = 'g' | 'w' | 'b'
+
+const GRADE_COLORS: Record<Grade, string> = { g: '#22c55e', w: '#f59e0b', b: '#ef4444' }
+
+// Good below `good`, a warning below `warn`, bad otherwise.
+function gradeBelow(value: number, good: number, warn: number): Grade {
+  if (value < good) return 'g'
+  return value < warn ? 'w' : 'b'
+}
+
+// Good above `good`, a warning above `warn`, bad otherwise.
+function gradeAbove(value: number, good: number, warn: number): Grade {
+  if (value > good) return 'g'
+  return value > warn ? 'w' : 'b'
+}
+
+function riskRows(r: BacktestResults) {
+  const m = r.metrics
+  const bankroll = r.config.starting_bankroll
+  const var95 = Math.abs(m.var_95)
+  return [
+    { label:'VaR (95%)',           value:`$${var95.toFixed(2)}/shoe`,                note:'Worst loss in 95% of shoes',      ok:gradeBelow(var95, bankroll*0.05, bankroll*0.15) },
+    { label:'Risk of Ruin',         value:`${(m.risk_of_ruin*100).toFixed(4)}%`,      note:'Prob bankroll → $0',              ok:gradeBelow(m.risk_of_ruin, 0.01, 0.05) },
+    { label:'Max Drawdown',         value:`$${m.max_drawdown.toFixed(0)} (${((m.max_drawdown/bankroll)*100).toFixed(1)}%)`, note:'Worst peak-to-trough', ok:gradeBelow(m.max_drawdown, bankroll*0.2, bankroll*0.4) },
+    { label:'DD Duration',          value:`${m.max_drawdown_duration} shoes`,         note:'Longest recovery period',          ok:gradeBelow(m.max_drawdown_duration, 50, 200) },
+    { label:'Kelly Criterion',      value:`${(m.kelly_fraction*100).toFixed(3)}%`,    note:'Optimal bet % of bankroll',        ok:gradeAbove(m.kelly_fraction, 0.001, 0) },
+    { label:'Max Loss Streak',      value:`${m.losing_streak_max} consecutive`,      note:'Longest losing run',               ok:gradeBelow(m.losing_streak_max, 10, 20) },
+  ]
+}
+
+// Green for a winning shoe, red for a losing one, deeper as the result nears
+// 10% of the starting bankroll.
+function heatColor(netPnl: number, bankroll: number): string {
+  const pct = Math.max(-1, Math.min(1, netPnl / (bankroll * 0.1)))
+  if (netPnl > 0) return `rgba(34,197,94,${0.15 + Math.max(0, Math.round(pct * 100)) * 0.008})`
+  if (netPnl < 0) return `rgba(239,68,68,${0.15 + Math.max(0, Math.round(-pct * 100)) * 0.008})`
+  return 'rgba(255,255,255,0.06)'
+}
+
+function EmptyResults({ runBacktest, isRunning }: Readonly<{ runBacktest: () => void; isRunning: boolean }>) {
+  return (
+    <div className="flex flex-col items-center justify-center h-full text-center px-6">
+      <div className="text-5xl mb-4 opacity-20">📊</div>
+      <h3 className="text-white/80 font-bold text-base mb-1">Results appear here</h3>
+      <p className="text-white/30 text-sm mb-6">Build a strategy and run a backtest to see performance metrics.</p>
+
+      {/* 3-step flow */}
+      <div className="flex items-center gap-2 mb-6 w-full max-w-xs">
+        {[
+          { n: '1', label: 'Build rules', sub: 'Strategy panel' },
+          { n: '2', label: 'Run backtest', sub: 'Bottom of panel' },
+          { n: '3', label: 'Analyse', sub: 'Here + AI Agent' },
+        ].map((step, i) => (
+          <React.Fragment key={step.n}>
+            <div className="flex-1 text-center">
+              <div className="w-7 h-7 rounded-full mx-auto mb-1 flex items-center justify-center text-xs font-bold"
+                style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.35)', color: 'rgba(167,139,250,0.9)' }}>
+                {step.n}
+              </div>
+              <div className="text-[11px] text-white/60 font-medium">{step.label}</div>
+              <div className="text-[9px] text-white/25">{step.sub}</div>
+            </div>
+            {i < 2 && <div className="text-white/15 text-sm shrink-0">→</div>}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <button onClick={runBacktest} disabled={isRunning}
+        className="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
+        <Play size={13} fill="currentColor"/>Run with defaults
+      </button>
+    </div>
+  )
+}
+
 export const ResultsPanel: React.FC = () => {
   const { backtestResults, previousResults, currentStrategy, runBacktest, isRunning, user, setShowUpgradeModal } = useStore()
   const [tab, setTab] = useState<Tab>('overview')
@@ -28,39 +104,7 @@ export const ResultsPanel: React.FC = () => {
   const tier = user?.subscription_tier ?? 'free'
 
   if (!backtestResults) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center px-6">
-        <div className="text-5xl mb-4 opacity-20">📊</div>
-        <h3 className="text-white/80 font-bold text-base mb-1">Results appear here</h3>
-        <p className="text-white/30 text-sm mb-6">Build a strategy and run a backtest to see performance metrics.</p>
-
-        {/* 3-step flow */}
-        <div className="flex items-center gap-2 mb-6 w-full max-w-xs">
-          {[
-            { n: '1', label: 'Build rules', sub: 'Strategy panel' },
-            { n: '2', label: 'Run backtest', sub: 'Bottom of panel' },
-            { n: '3', label: 'Analyse', sub: 'Here + AI Agent' },
-          ].map((step, i) => (
-            <React.Fragment key={step.n}>
-              <div className="flex-1 text-center">
-                <div className="w-7 h-7 rounded-full mx-auto mb-1 flex items-center justify-center text-xs font-bold"
-                  style={{ background: 'rgba(99,102,241,0.2)', border: '1px solid rgba(99,102,241,0.35)', color: 'rgba(167,139,250,0.9)' }}>
-                  {step.n}
-                </div>
-                <div className="text-[11px] text-white/60 font-medium">{step.label}</div>
-                <div className="text-[9px] text-white/25">{step.sub}</div>
-              </div>
-              {i < 2 && <div className="text-white/15 text-sm shrink-0">→</div>}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <button onClick={runBacktest} disabled={isRunning}
-          className="btn-primary px-5 py-2.5 text-sm flex items-center gap-2">
-          <Play size={13} fill="currentColor"/>Run with defaults
-        </button>
-      </div>
-    )
+    return <EmptyResults runBacktest={runBacktest} isRunning={isRunning} />
   }
 
   const r = backtestResults
@@ -165,15 +209,13 @@ export const ResultsPanel: React.FC = () => {
               <p className="section-label mb-2">Shoe Heatmap — Last 200 Shoes</p>
               <div className="glass p-3">
                 <div className="flex flex-wrap gap-0.5">
-                  {r.shoes.slice(-200).map((shoe, i) => {
-                    const pct = Math.max(-1, Math.min(1, shoe.net_pnl / (r.config.starting_bankroll * 0.1)))
-                    const g = Math.max(0, Math.round(pct * 100))
-                    const rd = Math.max(0, Math.round(-pct * 100))
+                  {r.shoes.slice(-200).map((shoe) => {
+                    const sign = shoe.net_pnl >= 0 ? '+' : ''
                     return (
-                      <div key={i} title={`Shoe ${shoe.shoe_number}: ${shoe.net_pnl>=0?'+':''}$${shoe.net_pnl.toFixed(0)}`}
+                      <div key={shoe.shoe_number} title={`Shoe ${shoe.shoe_number}: ${sign}$${shoe.net_pnl.toFixed(0)}`}
                         style={{
                           width:12, height:12, borderRadius:2,
-                          backgroundColor: shoe.net_pnl > 0 ? `rgba(34,197,94,${0.15+g*0.008})` : shoe.net_pnl < 0 ? `rgba(239,68,68,${0.15+rd*0.008})` : 'rgba(255,255,255,0.06)',
+                          backgroundColor: heatColor(shoe.net_pnl, r.config.starting_bankroll),
                         }}/>
                     )
                   })}
@@ -219,14 +261,7 @@ export const ResultsPanel: React.FC = () => {
               )}
               <p className="section-label mb-3">Risk Summary</p>
               <div className="space-y-2">
-                {[
-                  { label:'VaR (95%)',           value:`$${Math.abs(r.metrics.var_95).toFixed(2)}/shoe`,  note:'Worst loss in 95% of shoes',      ok:Math.abs(r.metrics.var_95) < r.config.starting_bankroll*0.05 ? 'g' : Math.abs(r.metrics.var_95) < r.config.starting_bankroll*0.15 ? 'w' : 'b' },
-                  { label:'Risk of Ruin',         value:`${(r.metrics.risk_of_ruin*100).toFixed(4)}%`,    note:'Prob bankroll → $0',              ok:r.metrics.risk_of_ruin < 0.01 ? 'g' : r.metrics.risk_of_ruin < 0.05 ? 'w' : 'b' },
-                  { label:'Max Drawdown',         value:`$${r.metrics.max_drawdown.toFixed(0)} (${((r.metrics.max_drawdown/r.config.starting_bankroll)*100).toFixed(1)}%)`, note:'Worst peak-to-trough', ok:r.metrics.max_drawdown < r.config.starting_bankroll*0.2 ? 'g' : r.metrics.max_drawdown < r.config.starting_bankroll*0.4 ? 'w' : 'b' },
-                  { label:'DD Duration',          value:`${r.metrics.max_drawdown_duration} shoes`,       note:'Longest recovery period',          ok:r.metrics.max_drawdown_duration < 50 ? 'g' : r.metrics.max_drawdown_duration < 200 ? 'w' : 'b' },
-                  { label:'Kelly Criterion',      value:`${(r.metrics.kelly_fraction*100).toFixed(3)}%`, note:'Optimal bet % of bankroll',        ok:r.metrics.kelly_fraction > 0.001 ? 'g' : r.metrics.kelly_fraction > 0 ? 'w' : 'b' },
-                  { label:'Max Loss Streak',      value:`${r.metrics.losing_streak_max} consecutive`,    note:'Longest losing run',               ok:r.metrics.losing_streak_max < 10 ? 'g' : r.metrics.losing_streak_max < 20 ? 'w' : 'b' },
-                ].map(row => (
+                {riskRows(r).map(row => (
                   <div key={row.label} className="flex items-center justify-between py-1.5"
                     style={{ borderBottom:'1px solid rgba(255,255,255,0.05)' }}>
                     <div>
@@ -235,7 +270,7 @@ export const ResultsPanel: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-mono text-white/70">{row.value}</span>
-                      <span className="w-2 h-2 rounded-full" style={{ background: row.ok==='g'?'#22c55e':row.ok==='w'?'#f59e0b':'#ef4444' }}/>
+                      <span className="w-2 h-2 rounded-full" style={{ background: GRADE_COLORS[row.ok] }}/>
                     </div>
                   </div>
                 ))}

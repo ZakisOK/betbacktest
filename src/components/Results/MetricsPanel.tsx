@@ -18,10 +18,34 @@ const Tile: React.FC<TileProps> = ({ label, value, sub, color, delta }) => (
   </div>
 )
 
-const G = (v: number, goodAbove?: number, goodBelow?: number) =>
-  goodAbove !== undefined ? (v >= goodAbove ? 'text-emerald-400' : 'text-red-400') :
-  goodBelow !== undefined ? (v <= goodBelow ? 'text-emerald-400' : 'text-red-400') :
-  v >= 0 ? 'text-emerald-400' : 'text-red-400'
+// Green when the value is on the good side of its threshold (0 by default).
+function G(v: number, goodAbove?: number, goodBelow?: number): string {
+  let good: boolean
+  if (goodAbove !== undefined) good = v >= goodAbove
+  else if (goodBelow !== undefined) good = v <= goodBelow
+  else good = v >= 0
+  return good ? 'text-emerald-400' : 'text-red-400'
+}
+
+// Sharpe and Sortino: above 1 is good, above 0 is marginal.
+function ratioColor(v: number): string {
+  if (v > 1) return 'text-emerald-400'
+  return v > 0 ? 'text-amber-400' : 'text-red-400'
+}
+
+function ruinColor(risk: number): string {
+  if (risk > 0.05) return 'text-red-400'
+  return risk > 0.01 ? 'text-amber-400' : 'text-emerald-400'
+}
+
+// Percentage of all hands, or 0 before any hand is dealt.
+function pctOf(count: number, total: number): number {
+  return total > 0 ? (count / total) * 100 : 0
+}
+
+function shareLabel(count: number, total: number): string {
+  return total > 0 ? `${pctOf(count, total).toFixed(1)}%` : '0%'
+}
 
 const SEC = (label: string) => (
   <p className="section-label mb-2 mt-1">{label}</p>
@@ -39,7 +63,7 @@ export const MetricsPanel: React.FC<Props> = ({ results, previous }) => {
         <Tile label="ROI"          value={`${(m.roi*100).toFixed(3)}%`}                                          color={G(m.roi)}          sub="of wagered"              delta={p ? (m.roi-p.roi)*100 : undefined}/>
         <Tile label="Win Rate"     value={`${(m.win_rate*100).toFixed(2)}%`}                                     color={G(m.win_rate,0.50)} sub="50% = break even (before commission)"/>
         <Tile label="EV / Hand"    value={`${m.ev_per_hand>=0?'+':''}$${m.ev_per_hand.toFixed(4)}`}             color={G(m.ev_per_hand)}  sub="avg profit per hand dealt"/>
-        <Tile label="Profit Factor"value={isFinite(m.profit_factor) ? m.profit_factor.toFixed(3) : '∞'}         color={G(m.profit_factor,1)} sub="wins ÷ losses (>1 = profitable)"/>
+        <Tile label="Profit Factor"value={Number.isFinite(m.profit_factor) ? m.profit_factor.toFixed(3) : '∞'}         color={G(m.profit_factor,1)} sub="wins ÷ losses (>1 = profitable)"/>
         <Tile label="Avg Bet"      value={`$${m.avg_bet_size.toFixed(2)}`}                                       color="text-white/80"     sub="per hand"/>
       </div>
 
@@ -50,13 +74,13 @@ export const MetricsPanel: React.FC<Props> = ({ results, previous }) => {
           sub={`${((m.max_drawdown/results.config.starting_bankroll)*100).toFixed(1)}%`}/>
         <Tile label="DD Duration"  value={`${m.max_drawdown_duration}`}          color="text-white/80" sub="shoes"/>
         <Tile label="Risk of Ruin" value={`${(m.risk_of_ruin*100).toFixed(3)}%`}
-          color={m.risk_of_ruin>0.05?'text-red-400':m.risk_of_ruin>0.01?'text-amber-400':'text-emerald-400'}
+          color={ruinColor(m.risk_of_ruin)}
           sub="bankroll→0"/>
         <Tile label="Sharpe"   value={m.sharpe_ratio.toFixed(3)}
-          color={m.sharpe_ratio>1?'text-emerald-400':m.sharpe_ratio>0?'text-amber-400':'text-red-400'}
+          color={ratioColor(m.sharpe_ratio)}
           sub="return per unit of risk"/>
         <Tile label="Sortino"  value={m.sortino_ratio.toFixed(3)}
-          color={m.sortino_ratio>1?'text-emerald-400':m.sortino_ratio>0?'text-amber-400':'text-red-400'}
+          color={ratioColor(m.sortino_ratio)}
           sub="return per unit of downside"/>
         <Tile label="Kelly %"  value={`${(m.kelly_fraction*100).toFixed(2)}%`} color="text-blue-400" sub="optimal bet fraction of bankroll"/>
       </div>
@@ -67,9 +91,9 @@ export const MetricsPanel: React.FC<Props> = ({ results, previous }) => {
         <Tile label="Max Loss Streak" value={`${m.losing_streak_max}`}                   color="text-red-400"     sub="consecutive"/>
         <Tile label="Skipped Hands"   value={m.skipped_hands.toLocaleString()}            color="text-white/50"    sub="no bet"/>
         <Tile label="Banker Bets"     value={m.banker_bet_count.toLocaleString()}         color="text-blue-400"
-          sub={`${m.total_hands>0?((m.banker_bet_count/m.total_hands)*100).toFixed(1):0}%`}/>
+          sub={shareLabel(m.banker_bet_count, m.total_hands)}/>
         <Tile label="Player Bets"     value={m.player_bet_count.toLocaleString()}         color="text-red-400"
-          sub={`${m.total_hands>0?((m.player_bet_count/m.total_hands)*100).toFixed(1):0}%`}/>
+          sub={shareLabel(m.player_bet_count, m.total_hands)}/>
         <Tile label="Wagered"         value={`$${(m.total_wagered/1000).toFixed(0)}K`}   color="text-white/80"    sub="gross"/>
       </div>
 
@@ -78,9 +102,9 @@ export const MetricsPanel: React.FC<Props> = ({ results, previous }) => {
         <p className="section-label mb-2">Outcome Distribution (all hands)</p>
         <div className="space-y-2">
           {[
-            { label:'Banker', pct: m.total_hands>0 ? (m.banker_win_count/m.total_hands)*100 : 0, color:'#3b82f6', expected:45.86 },
-            { label:'Player', pct: m.total_hands>0 ? (m.player_win_count/m.total_hands)*100 : 0, color:'#ef4444', expected:44.62 },
-            { label:'Tie',    pct: m.total_hands>0 ? (m.tie_count/m.total_hands)*100 : 0,         color:'#22c55e', expected:9.52  },
+            { label:'Banker', pct: pctOf(m.banker_win_count, m.total_hands), color:'#3b82f6', expected:45.86 },
+            { label:'Player', pct: pctOf(m.player_win_count, m.total_hands), color:'#ef4444', expected:44.62 },
+            { label:'Tie',    pct: pctOf(m.tie_count, m.total_hands),        color:'#22c55e', expected:9.52  },
           ].map(s => (
             <div key={s.label}>
               <div className="flex justify-between text-[10px] mb-1">

@@ -36,7 +36,6 @@ function buildHistogram(data: number[], bins = 30) {
     buckets[idx].count++
   }
 
-  const maxCount = Math.max(...buckets.map((b) => b.count))
   buckets.forEach((b) => (b.pct = (b.count / data.length) * 100))
 
   return buckets
@@ -101,9 +100,9 @@ export const PnLHistogram: React.FC<Props> = ({ results }) => {
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
           <ReferenceLine x={0} stroke="#475569" strokeWidth={1} />
           <Bar dataKey="count" radius={[2, 2, 0, 0]}>
-            {histogram.map((entry, index) => (
+            {histogram.map((entry) => (
               <Cell
-                key={`cell-${index}`}
+                key={entry.bin}
                 fill={entry.mid >= 0 ? '#22c55e' : '#ef4444'}
                 fillOpacity={0.7}
               />
