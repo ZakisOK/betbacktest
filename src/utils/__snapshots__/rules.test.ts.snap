@@ -84,7 +84,7 @@ exports[`parseNLRule > "1-3-2-6 when 3 wins" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "1326 after 3 wines",
+      "label": "1326 after 3 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -109,10 +109,10 @@ exports[`parseNLRule > "2 3x bet after 1 loss" 1`] = `
       "action": {
         "method": "multiply",
         "type": "adjust_unit",
-        "value": 2,
+        "value": 3,
       },
       "enabled": true,
-      "label": "2× bet after 1 losss",
+      "label": "3× bet after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -168,7 +168,7 @@ exports[`parseNLRule > "2x double bet after 1 loss" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "2× bet after 1 losss",
+      "label": "2× bet after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -221,10 +221,10 @@ exports[`parseNLRule > "3x the wager on 1 win" 1`] = `
       "action": {
         "method": "multiply",
         "type": "adjust_unit",
-        "value": 2,
+        "value": 3,
       },
       "enabled": true,
-      "label": "2× bet after 1 wins",
+      "label": "3× bet after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -252,7 +252,7 @@ exports[`parseNLRule > "4 bet after 1 loss" 1`] = `
         "value": 4,
       },
       "enabled": true,
-      "label": "4× bet after 1 losss",
+      "label": "4× bet after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -280,7 +280,7 @@ exports[`parseNLRule > "12x bet after 1 win" 1`] = `
         "value": 12,
       },
       "enabled": true,
-      "label": "12× bet after 1 wins",
+      "label": "12× bet after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -308,7 +308,7 @@ exports[`parseNLRule > "1326 after 1 win" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "1326 after 1 wins",
+      "label": "1326 after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -414,7 +414,7 @@ exports[`parseNLRule > "a12x bet after 1 win" 1`] = `
         "value": 12,
       },
       "enabled": true,
-      "label": "12× bet after 1 wins",
+      "label": "12× bet after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -442,7 +442,7 @@ exports[`parseNLRule > "add the bet 1 after 2 wins then back to base" 1`] = `
         "value": 1,
       },
       "enabled": true,
-      "label": "Add 1u after 2 wines",
+      "label": "Add 1u after 2 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -971,7 +971,7 @@ exports[`parseNLRule > "bump stakes 3 on 1 loss" 1`] = `
         "value": 3,
       },
       "enabled": true,
-      "label": "Add 3u after 1 losss",
+      "label": "Add 3u after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1027,7 +1027,7 @@ exports[`parseNLRule > "dalembert after loss" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "dalembert after 1 losss",
+      "label": "dalembert after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1055,7 +1055,7 @@ exports[`parseNLRule > "double bet after 1 loss and triple bet after 2 wins" 1`]
         "value": 2,
       },
       "enabled": true,
-      "label": "2× bet after 1 losss",
+      "label": "2× bet after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1147,7 +1147,7 @@ exports[`parseNLRule > "fibonacci when losses" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "fibonacci after 1 losss",
+      "label": "fibonacci after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1299,7 +1299,7 @@ exports[`parseNLRule > "labouchere on 4 wins" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "labouchere after 4 wines",
+      "label": "labouchere after 4 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1390,7 +1390,7 @@ exports[`parseNLRule > "oscar grind after 1 win" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "oscars_grind after 1 wins",
+      "label": "oscars_grind after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1418,7 +1418,7 @@ exports[`parseNLRule > "oscars grind on 3 wins" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "oscars_grind after 3 wines",
+      "label": "oscars_grind after 3 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -1552,7 +1552,7 @@ exports[`parseNLRule > "raise the bet by one unit when 2 consecutive wins" 1`] =
         "value": 1,
       },
       "enabled": true,
-      "label": "Add 1u after 2 wines",
+      "label": "Add 1u after 2 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2059,7 +2059,7 @@ exports[`parseNLRule > "triple bet when 1 win" 1`] = `
         "value": 3,
       },
       "enabled": true,
-      "label": "3× bet after 1 wins",
+      "label": "3× bet after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2087,7 +2087,7 @@ exports[`parseNLRule > "triple wager when 10 wins" 1`] = `
         "value": 3,
       },
       "enabled": true,
-      "label": "3× bet after 10 wines",
+      "label": "3× bet after 10 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2115,7 +2115,7 @@ exports[`parseNLRule > "use 1-3-2-6 after 1 consecutive win" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "1326 after 1 wins",
+      "label": "1326 after 1 win",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2143,7 +2143,7 @@ exports[`parseNLRule > "use d'alembert on 1 consecutive loss" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "dalembert after 1 losss",
+      "label": "dalembert after 1 loss",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2171,7 +2171,7 @@ exports[`parseNLRule > "use fibonacci progression when 2 consecutive wins" 1`] =
         "value": 2,
       },
       "enabled": true,
-      "label": "fibonacci after 2 wines",
+      "label": "fibonacci after 2 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2283,7 +2283,7 @@ exports[`parseNLRule > "use oscar's grind after 2 consecutive wins" 1`] = `
         "value": 2,
       },
       "enabled": true,
-      "label": "oscars_grind after 2 wines",
+      "label": "oscars_grind after 2 wins",
       "modifiers": {
         "shoe_reset": "reset",
       },
@@ -2511,7 +2511,7 @@ exports[`ruleToSentence > describes every parsed sentence 1`] = `
   "After 2+ any side losses → multiply bet × 2",
   "After 1+ any side win → multiply bet × 3",
   "After 3+ any side losses → multiply bet × 2",
-  "After 1+ any side win → multiply bet × 2",
+  "After 1+ any side win → multiply bet × 3",
   "After 2+ any side losses → multiply bet × 2.5",
   "After 1+ any side loss → multiply bet × 4",
   "After 3+ Banker wins → bet 2 units on Player",
@@ -2535,7 +2535,7 @@ exports[`ruleToSentence > describes every parsed sentence 1`] = `
   "After 2+ any side losses → multiply bet × 2",
   "After 2+ any side losses → multiply bet × 2",
   "After 10+ any side wins → multiply bet × 3",
-  "After 1+ any side loss → multiply bet × 2",
+  "After 1+ any side loss → multiply bet × 3",
   "After 1+ any side loss → multiply bet × 2",
   "After 1+ any side loss → multiply bet × 2",
   "After 3+ Banker wins → bet 3 units on Banker",
