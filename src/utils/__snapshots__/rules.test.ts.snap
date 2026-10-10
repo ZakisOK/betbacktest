@@ -1,0 +1,2006 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`parseNLRule > "   " 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "" 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "2.5x bet after 2 losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "multiply",
+        "type": "adjust_unit",
+        "value": 2.5,
+      },
+      "enabled": true,
+      "label": "2.5× bet after 2 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "2x stake after every 3 losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "multiply",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "2× bet after 3 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 3,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "3x the wager on 1 win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "multiply",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "2× bet after 1 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "4 bet after 1 loss" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "multiply",
+        "type": "adjust_unit",
+        "value": 4,
+      },
+      "enabled": true,
+      "label": "4× bet after 1 losss",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "1326 after 1 win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "1326",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "1326 after 1 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "STOP LOSS ONE" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -1,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $1",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -1,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "Stop loss $150.50" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -150.5,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $150.5",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -150.5,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "Take Profit 10 and stop loss 20" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -20,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $20",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -20,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "add the bet 1 after 2 wins then back to base" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "add",
+        "type": "adjust_unit",
+        "value": 1,
+      },
+      "enabled": true,
+      "label": "Add 1u after 2 wines",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset to base after loss",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after 2 xyz wins boost the bet 2 units" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 2,
+      },
+      "enabled": true,
+      "label": "Bet +2u on Banker after 2 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after 3 banker wins raise the bet 2 units then reset after a win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 2,
+      },
+      "enabled": true,
+      "label": "Bet +2u on Banker after 3 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 3,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset to base after win",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after 3 bankers increase bet 3 units then back to base" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 3,
+      },
+      "enabled": true,
+      "label": "Bet +3u on Banker after 3 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 3,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset to base after win",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after 4 ties bump wager 1" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Tie",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Bet +1u on Tie after 4 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 4,
+        "side": "Tie",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after a tie, skip 2" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "skip_count": 2,
+        "type": "skip_hand",
+      },
+      "enabled": true,
+      "label": "Skip 2 hands after Tie",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Tie",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after two players in a row, add stake by one unit then reset after a loss" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Player",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Bet +1u on Player after 2 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Player",
+        "type": "streak",
+      },
+    },
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset to base after loss",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Player",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "after zero bankers increase bet 0 units" 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "always bet banker" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Always bet Banker (flat)",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 1,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "bet 0 units on banker after 2 player wins" 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "bet 1 unit on tie when 4 consecutive banker wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Tie",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Bet 1u on Tie after 4 Banker wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 4,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "bet 2 units on player after 3 consecutive banker wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Player",
+        "type": "place_bet",
+        "unit_size": 2,
+      },
+      "enabled": true,
+      "label": "Bet 2u on Player after 3 Banker wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 3,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "bet on banker when bankroll below $4000" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+      },
+      "enabled": true,
+      "label": "Bet Banker when bankroll below $4000",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "bankroll_below",
+        "threshold": 4000,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "bet on player after 2 banker wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Player",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Bet Player after 2 Banker wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "bet on xyz after 2 banker wins" 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "bet three on banker following 2 player losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 3,
+      },
+      "enabled": true,
+      "label": "Bet 3u on Banker after 2 Player losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 2,
+        "side": "Player",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "bump stakes 3 on 1 loss" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "add",
+        "type": "adjust_unit",
+        "value": 3,
+      },
+      "enabled": true,
+      "label": "Add 3u after 1 losss",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "dalembert after loss" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "dalembert",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "dalembert after 1 losss",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "double the bet after 2 losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "multiply",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "2× bet after 2 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "fibonacci when losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "fibonacci",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "fibonacci after 1 losss",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "flat banker" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Always bet Banker (flat)",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 1,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "flat bet on player" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Player",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Always bet Player (flat)",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 1,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "increase bet 2 units after 3 losses then reset" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "add",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "Add 2u after 3 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 3,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset to base after win",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "just tie" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Tie",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Always bet Tie (flat)",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 1,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "martingale after 2 losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "martingale",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "martingale after 2 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "on tie skip three" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "skip_count": 3,
+        "type": "skip_hand",
+      },
+      "enabled": true,
+      "label": "Skip 3 hands after Tie",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Tie",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "only bet on the house" 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "oscars grind on 3 wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "oscars_grind",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "oscars_grind after 3 wines",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 3,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "place xyz when balance over 50" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+      },
+      "enabled": true,
+      "label": "Bet Any when bankroll above $50",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "bankroll_above",
+        "threshold": 50,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "play on tie after 1 banker win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Tie",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Bet Tie after 1 Banker wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Banker",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "play tie when bankroll under 1000" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Tie",
+        "type": "place_bet",
+      },
+      "enabled": true,
+      "label": "Bet Tie when bankroll below $1000",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "bankroll_below",
+        "threshold": 1000,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "quit when up over $400" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": 400,
+        "type": "take_profit",
+      },
+      "enabled": true,
+      "label": "Take Profit at $400",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_profit",
+        "threshold": 400,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "raise the bet by one unit when 2 consecutive wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "add",
+        "type": "adjust_unit",
+        "value": 1,
+      },
+      "enabled": true,
+      "label": "Add 1u after 2 wines",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "reset progression after a win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset progression after win",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "reset the bet on loss" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset progression after loss",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "reset units when a win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "reset_to": 1,
+        "type": "reset_progression",
+      },
+      "enabled": true,
+      "label": "Reset progression after win",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "skip 2 hands after a tie" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "skip_count": 2,
+        "type": "skip_hand",
+      },
+      "enabled": true,
+      "label": "Skip 2 hands after Tie",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Tie",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "skip 3 hands if player wins twice" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "skip_count": 3,
+        "type": "skip_hand",
+      },
+      "enabled": true,
+      "label": "Skip 3 hands after player wins twice",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 1,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "skip one hand when bankroll drops" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "skip_count": 1,
+        "type": "skip_hand",
+      },
+      "enabled": true,
+      "label": "Skip 1 hand after bankroll drops",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 1,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "something completely different" 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > "stop loss 200" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -200,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $200",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -200,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "stop when down more than 300" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -300,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $300",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -300,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "stop when losing exceeds $ 75" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -75,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $75",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -75,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "stop when loss over two" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": -2,
+        "type": "stop_loss",
+      },
+      "enabled": true,
+      "label": "Stop Loss at $2",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_loss",
+        "threshold": -2,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "stop when profit exceeds 90" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": 90,
+        "type": "take_profit",
+      },
+      "enabled": true,
+      "label": "Take Profit at $90",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_profit",
+        "threshold": 90,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "stop when winning 3" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": 3,
+        "type": "take_profit",
+      },
+      "enabled": true,
+      "label": "Take Profit at $3",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_profit",
+        "threshold": 3,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "take profit 500" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": 500,
+        "type": "take_profit",
+      },
+      "enabled": true,
+      "label": "Take Profit at $500",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_profit",
+        "threshold": 500,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "take profit at $250" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": 250,
+        "type": "take_profit",
+      },
+      "enabled": true,
+      "label": "Take Profit at $250",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_profit",
+        "threshold": 250,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "take profit when up 120" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "threshold": 120,
+        "type": "take_profit",
+      },
+      "enabled": true,
+      "label": "Take Profit at $120",
+      "modifiers": {
+        "shoe_reset": "carry",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "session_profit",
+        "threshold": 120,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "triple bet when 1 win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "multiply",
+        "type": "adjust_unit",
+        "value": 3,
+      },
+      "enabled": true,
+      "label": "3× bet after 1 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use 1-3-2-6 after 1 consecutive win" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "1326",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "1326 after 1 wins",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use d'alembert on 1 consecutive loss" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "dalembert",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "dalembert after 1 losss",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 1,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use fibonacci progression when 2 consecutive wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "fibonacci",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "fibonacci after 2 wines",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use flat betting after 2 consecutive losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "flat",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "flat after 2 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use labouchere after five consecutive losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "labouchere",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "labouchere after 5 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 5,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use martingale after 3 consecutive losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "martingale",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "martingale after 3 losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 3,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "use oscar's grind after 2 consecutive wins" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "method": "oscars_grind",
+        "type": "adjust_unit",
+        "value": 2,
+      },
+      "enabled": true,
+      "label": "oscars_grind after 2 wines",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_wins",
+        "min_length": 2,
+        "side": "Any",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "wager banker after three consecutive player losses" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Banker",
+        "type": "place_bet",
+        "unit_size": 1,
+      },
+      "enabled": true,
+      "label": "Bet Banker after 3 Player losses",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "direction": "consecutive_losses",
+        "min_length": 3,
+        "side": "Player",
+        "type": "streak",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > "wager player when balance above 6000" 1`] = `
+{
+  "confidence": "high",
+  "method": "regex",
+  "rules": [
+    {
+      "action": {
+        "side": "Player",
+        "type": "place_bet",
+      },
+      "enabled": true,
+      "label": "Bet Player when bankroll above $6000",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "condition": "bankroll_above",
+        "threshold": 6000,
+        "type": "financial_state",
+      },
+    },
+  ],
+}
+`;
+
+exports[`parseNLRule > fails cleanly when the AI reply is empty array 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > fails cleanly when the AI reply is not JSON 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > fails cleanly when the AI reply is not an array 1`] = `
+{
+  "confidence": "none",
+  "method": "failed",
+  "rules": [],
+}
+`;
+
+exports[`parseNLRule > uses the AI reply when no local pattern matches 1`] = `
+{
+  "confidence": "low",
+  "method": "ai",
+  "rules": [
+    {
+      "action": {
+        "side": "Player",
+        "type": "place_bet",
+      },
+      "enabled": true,
+      "label": "AI rule",
+      "modifiers": {
+        "shoe_reset": "reset",
+      },
+      "priority": 0,
+      "trigger": {
+        "hand_min": 3,
+        "type": "hand_count",
+      },
+    },
+  ],
+}
+`;
+
+exports[`ruleToSentence > describes every action 1`] = `
+[
+  "On every hand → bet 1 unit on Player",
+  "On every hand → bet 3 units on Banker",
+  "On every hand → bet 1 unit on Banker",
+  "On every hand → keep bet flat",
+  "On every hand → double bet (Martingale)",
+  "On every hand → step up Fibonacci",
+  "On every hand → increase 1 unit (D'Alembert)",
+  "On every hand → follow Labouchere sequence",
+  "On every hand → follow Oscar's Grind",
+  "On every hand → follow 1-3-2-6 sequence",
+  "On every hand → multiply bet × 2",
+  "On every hand → add 1 units to bet",
+  "On every hand → multiply bet × 3",
+  "On every hand → add 2 units to bet",
+  "On every hand → keep bet flat",
+  "On every hand → skip 1 hand",
+  "On every hand → skip 4 hands",
+  "On every hand → skip 1 hand",
+  "On every hand → reset bet back to base unit",
+  "On every hand → lock bets on Player for 3 hands",
+  "On every hand → lock bets on same side for 1 hands",
+  "On every hand → stop betting for this session",
+  "On every hand → stop betting for this session",
+  "On every hand → lock in profit and stop betting",
+  "On every hand → lock in profit and stop betting",
+]
+`;
+
+exports[`ruleToSentence > describes every parsed sentence 1`] = `
+[
+  "When session loss ≥ $200 → stop betting for this session",
+  "When session loss ≥ $150.5 → stop betting for this session",
+  "When session loss ≥ $300 → stop betting for this session",
+  "When session loss ≥ $75 → stop betting for this session",
+  "When session loss ≥ $2 → stop betting for this session",
+  "When session profit ≥ $500 → lock in profit and stop betting",
+  "When session profit ≥ $250 → lock in profit and stop betting",
+  "When session profit ≥ $120 → lock in profit and stop betting",
+  "When session profit ≥ $400 → lock in profit and stop betting",
+  "When session profit ≥ $90 → lock in profit and stop betting",
+  "When session profit ≥ $3 → lock in profit and stop betting",
+  "After 3+ Banker wins → bet 3 units on Banker",
+  "After 1+ Banker win → reset bet back to base unit",
+  "After 3+ Banker wins → bet 2 units on Banker",
+  "After 1+ Banker win → reset bet back to base unit",
+  "After 2+ Player wins → bet 1 unit on Player",
+  "After 1+ Player loss → reset bet back to base unit",
+  "After 4+ Tie wins → bet 1 unit on Tie",
+  "After 2+ Banker wins → bet 2 units on Banker",
+  "After 3+ any side losses → add 2 units to bet",
+  "After 1+ any side win → reset bet back to base unit",
+  "After 2+ any side wins → add 1 units to bet",
+  "After 1+ any side loss → add 3 units to bet",
+  "After 2+ any side wins → add 1 units to bet",
+  "After 1+ any side loss → reset bet back to base unit",
+  "After 1+ Tie win → skip 2 hands",
+  "On every hand → skip 1 hand",
+  "On every hand → skip 3 hands",
+  "After 1+ Tie win → skip 2 hands",
+  "After 1+ Tie win → skip 3 hands",
+  "When bankroll drops below $4000 → bet 1 unit on Banker",
+  "When bankroll rises above $6000 → bet 1 unit on Player",
+  "When bankroll drops below $1000 → bet 1 unit on Tie",
+  "When bankroll rises above $50 → bet 1 unit on Banker",
+  "After 3+ any side losses → double bet (Martingale)",
+  "After 2+ any side wins → step up Fibonacci",
+  "After 1+ any side loss → increase 1 unit (D'Alembert)",
+  "After 5+ any side losses → follow Labouchere sequence",
+  "After 2+ any side wins → follow Oscar's Grind",
+  "After 1+ any side win → follow 1-3-2-6 sequence",
+  "After 2+ any side losses → keep bet flat",
+  "After 2+ any side losses → double bet (Martingale)",
+  "After 1+ any side loss → step up Fibonacci",
+  "After 3+ any side wins → follow Oscar's Grind",
+  "After 1+ any side win → follow 1-3-2-6 sequence",
+  "After 1+ any side loss → increase 1 unit (D'Alembert)",
+  "After 2+ any side losses → multiply bet × 2",
+  "After 1+ any side win → multiply bet × 3",
+  "After 3+ any side losses → multiply bet × 2",
+  "After 1+ any side win → multiply bet × 2",
+  "After 2+ any side losses → multiply bet × 2.5",
+  "After 1+ any side loss → multiply bet × 4",
+  "After 3+ Banker wins → bet 2 units on Player",
+  "After 2+ Player losses → bet 3 units on Banker",
+  "After 4+ Banker wins → bet 1 unit on Tie",
+  "After 2+ Banker wins → bet 1 unit on Player",
+  "After 3+ Player losses → bet 1 unit on Banker",
+  "After 1+ Banker win → bet 1 unit on Tie",
+  "After 1+ any side win → reset bet back to base unit",
+  "After 1+ any side loss → reset bet back to base unit",
+  "After 1+ any side win → reset bet back to base unit",
+  "On every hand → bet 1 unit on Banker",
+  "On every hand → bet 1 unit on Player",
+  "On every hand → bet 1 unit on Tie",
+  "On every hand → bet 1 unit on Banker",
+  "When session loss ≥ $1 → stop betting for this session",
+  "When session loss ≥ $20 → stop betting for this session",
+]
+`;
+
+exports[`ruleToSentence > describes every trigger 1`] = `
+[
+  "After 1+ Banker win → bet 1 unit on Banker",
+  "After 3+ Player wins → bet 1 unit on Banker",
+  "After 1+ any side loss → bet 1 unit on Banker",
+  "After 2+ any side losses → bet 1 unit on Banker",
+  "After 2+ alternating results → bet 1 unit on Banker",
+  "After 1+ streak on Banker → bet 1 unit on Banker",
+  "When session loss ≥ $200 → bet 1 unit on Banker",
+  "When session profit ≥ $300 → bet 1 unit on Banker",
+  "When bankroll drops below $1000 → bet 1 unit on Banker",
+  "When bankroll rises above $9000 → bet 1 unit on Banker",
+  "On financial condition → bet 1 unit on Banker",
+  "On every hand → bet 1 unit on Banker",
+  "On every hand from #5 → bet 1 unit on Banker",
+  "On every hand → bet 1 unit on Banker",
+  "On hands 10–40 → bet 1 unit on Banker",
+  "On hands 1–20 → bet 1 unit on Banker",
+  "When pattern "B-P-B" appears in last 6 hands → bet 1 unit on Banker",
+  "When pattern "?" appears in last ? hands → bet 1 unit on Banker",
+  "When OR sub-conditions match → bet 1 unit on Banker",
+  "When all sub-conditions match → bet 1 unit on Banker",
+  "When triggered → bet 1 unit on Banker",
+]
+`;

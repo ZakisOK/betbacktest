@@ -34,8 +34,10 @@ const WORD_NUMS: Record<string, number> = {
   an: 1,
 };
 
-/** Parse a number that may be digits or a word ("3" or "three"). */
-function parseNum(s: string): number | undefined {
+/** Parse a number that may be digits or a word ("3" or "three"). An optional
+ * regex group that did not match arrives as undefined. */
+function parseNum(s: string | undefined): number | undefined {
+  if (s === undefined) return undefined;
   const trimmed = s.trim().toLowerCase();
   if (WORD_NUMS[trimmed] !== undefined) return WORD_NUMS[trimmed];
   const n = parseFloat(trimmed);
