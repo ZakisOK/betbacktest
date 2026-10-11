@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { X, Check, Lock } from 'lucide-react'
 import { useStore } from '../store/useStore'
 import { openCheckout, VARIANT_IDS } from '../lib/lemonsqueezy'
+import { ModalBackdrop } from './ModalBackdrop'
 
 const FEATURES = [
   { name: 'Strategies', free: '3', pro: '25', lab: 'Unlimited' },
@@ -16,7 +17,7 @@ const FEATURES = [
   { name: 'Pattern reviewer', free: false, pro: false, lab: true },
 ]
 
-function CellVal({ val }: { val: boolean | string }) {
+function CellVal({ val }: Readonly<{ val: boolean | string }>) {
   if (val === false) return <Lock size={13} className="text-white/20 mx-auto" />
   if (val === true) return <Check size={13} className="text-emerald-400 mx-auto" />
   return <span className="text-xs text-white/60">{val}</span>
@@ -26,26 +27,29 @@ interface Props {
   onClose: () => void
 }
 
+const PLAN_VARIANTS = {
+  annual:  { pro: VARIANT_IDS.pro_annual,  lab: VARIANT_IDS.lab_annual },
+  monthly: { pro: VARIANT_IDS.pro_monthly, lab: VARIANT_IDS.lab_monthly },
+}
+
+function proButtonLabel(currentTier: string): string {
+  if (currentTier === 'pro') return 'Current plan'
+  return currentTier === 'lab' ? 'Downgrade' : 'Start free trial'
+}
+
 export const UpgradeModal: React.FC<Props> = ({ onClose }) => {
   const { user } = useStore()
   const [billing, setBilling] = useState<'monthly' | 'annual'>('annual')
 
   function upgrade(plan: 'pro' | 'lab') {
     if (!user) return
-    const variantId = billing === 'annual'
-      ? (plan === 'pro' ? VARIANT_IDS.pro_annual : VARIANT_IDS.lab_annual)
-      : (plan === 'pro' ? VARIANT_IDS.pro_monthly : VARIANT_IDS.lab_monthly)
-    openCheckout(variantId, user)
+    openCheckout(PLAN_VARIANTS[billing][plan], user)
   }
 
   const currentTier = user?.subscription_tier ?? 'free'
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop onClose={onClose} background="rgba(0,0,0,0.75)">
       <div
         className="glass-elevated rounded-2xl p-6 w-full max-w-2xl relative overflow-y-auto max-h-[90vh]"
         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
@@ -84,7 +88,7 @@ export const UpgradeModal: React.FC<Props> = ({ onClose }) => {
             className="text-sm transition-colors flex items-center gap-1.5"
             style={{ color: billing === 'annual' ? 'white' : 'rgba(255,255,255,0.35)' }}
           >
-            Annual
+            <span>Annual</span>
             <span className="text-xs px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400">Save 17%</span>
           </button>
         </div>
@@ -110,7 +114,7 @@ export const UpgradeModal: React.FC<Props> = ({ onClose }) => {
               disabled={currentTier === 'pro' || currentTier === 'lab'}
               className="btn-primary w-full py-2.5 rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {currentTier === 'pro' ? 'Current plan' : currentTier === 'lab' ? 'Downgrade' : 'Start free trial'}
+              {proButtonLabel(currentTier)}
             </button>
           </div>
 
@@ -163,6 +167,6 @@ export const UpgradeModal: React.FC<Props> = ({ onClose }) => {
           </table>
         </div>
       </div>
-    </div>
+    </ModalBackdrop>
   )
 }

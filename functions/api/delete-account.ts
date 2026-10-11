@@ -45,7 +45,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 }
 
-export const onRequest: PagesFunction<Env> = async (context) => {
+export const onRequest: PagesFunction<Env> = (context) => {
   if (context.request.method !== 'POST') return new Response('Method not allowed', { status: 405 })
   return onRequestPost(context)
 }
