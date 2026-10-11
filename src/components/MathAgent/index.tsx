@@ -52,7 +52,7 @@ function renderLine(line: string, position: number): React.ReactNode {
 }
 
 function renderContent(text: string): React.ReactNode[] {
-  return text.split('\n').map(renderLine)
+  return text.split('\n').map((line, position) => renderLine(line, position))
 }
 
 const Bubble: React.FC<{ msg: AgentMessage }> = ({ msg }) => {

@@ -31,6 +31,8 @@ interface ProgressionState {
   sequenceStep: number; // for 1-3-2-6
 }
 
+type OutcomeCode = "B" | "P" | "T";
+
 interface SimState {
   bankroll: number;
   session_pnl: number;
@@ -40,7 +42,7 @@ interface SimState {
   lock_remaining: number;
   consecutive_wins: Record<BetSide, number>;
   consecutive_losses: Record<BetSide, number>;
-  last_outcomes: ("B" | "P" | "T")[];
+  last_outcomes: OutcomeCode[];
   hand_number: number;
   skip_remaining: number;
   stopped: boolean;
@@ -306,9 +308,8 @@ function skipDecision(): BetDecision {
   return { side: null, amount: 0, skip: true, stop: false };
 }
 
-// Stops the session when the threshold is hit, otherwise skips the hand.
-function stopDecision(hit: boolean): BetDecision {
-  return hit ? { side: null, amount: 0, skip: false, stop: true } : skipDecision();
+function stopSession(): BetDecision {
+  return { side: null, amount: 0, skip: false, stop: true };
 }
 
 function cappedAmount(amount: number, maxBet: number | undefined): number {
@@ -360,10 +361,10 @@ function applyAction(action: Action, rule: Rule, state: SimState): BetDecision {
       return skipDecision();
 
     case "stop_loss":
-      return stopDecision(state.session_pnl <= (action.threshold ?? -Infinity));
+      return state.session_pnl <= (action.threshold ?? -Infinity) ? stopSession() : skipDecision();
 
     case "take_profit":
-      return stopDecision(state.session_pnl >= (action.threshold ?? Infinity));
+      return state.session_pnl >= (action.threshold ?? Infinity) ? stopSession() : skipDecision();
 
     default:
       return skipDecision();
@@ -427,7 +428,7 @@ function computePnL(
 // Update State After Hand
 // ────────────────────────────────────────────────────────────
 
-function outcomeCode(outcome: "Banker" | "Player" | "Tie"): "B" | "P" | "T" {
+function outcomeCode(outcome: "Banker" | "Player" | "Tie"): OutcomeCode {
   if (outcome === "Banker") return "B";
   return outcome === "Player" ? "P" : "T";
 }
@@ -513,7 +514,7 @@ function simulateShoe(
 
   const cutPoint = shoe.length - config.cut_card_position;
   const hands: HandResult[] = [];
-  const sequence: ("B" | "P" | "T")[] = [];
+  const sequence: OutcomeCode[] = [];
   const startingBankroll = state.bankroll;
 
   // Reset shoe-level state if configured

@@ -123,18 +123,24 @@ function buildCandidate(spec: CandidateSpec, baseUnit: number, bankroll: number)
   }
 }
 
+const RISK_LIMITS = STOP_LOSSES.flatMap(sl => TAKE_PROFITS.map(tp => ({ sl, tp })))
+
 // Every combination of side, streak length, progression, stop loss and take
 // profit, in that nesting order.
+function candidateSpecs(): CandidateSpec[] {
+  const specs: CandidateSpec[] = []
+  for (const side of BET_SIDES) {
+    for (const streakLen of STREAK_LENS) {
+      for (const prog of PROGRESSIONS) {
+        for (const { sl, tp } of RISK_LIMITS) specs.push({ side, streakLen, prog, sl, tp })
+      }
+    }
+  }
+  return specs
+}
+
 function buildCandidates(baseUnit: number, bankroll: number): DiscoveryCandidate[] {
-  return BET_SIDES.flatMap(side =>
-    STREAK_LENS.flatMap(streakLen =>
-      PROGRESSIONS.flatMap(prog =>
-        STOP_LOSSES.flatMap(sl =>
-          TAKE_PROFITS.map(tp => buildCandidate({ side, streakLen, prog, sl, tp }, baseUnit, bankroll)),
-        ),
-      ),
-    ),
-  )
+  return candidateSpecs().map(spec => buildCandidate(spec, baseUnit, bankroll))
 }
 
 // ────────────────────────────────────────────────────────────
