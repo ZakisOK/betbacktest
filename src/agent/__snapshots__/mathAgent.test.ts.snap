@@ -7,7 +7,7 @@ exports[`sendAgentRequest offline fallback > analyses a large run 1`] = `
 **FINDING:** Strategy shows net negative P&L of $198.00 — consistent with the theoretical house edge.
 
 **MATH:**
-• Banker EV (5% commission): -1.06% per unit
+• Banker EV (Standard rules): -1.06% per unit
 • Player EV: -1.24% per unit
 • Observed ROI: -1.2306%
 • Deviation from the -1.06% expected return of the bets placed: -0.1727% (below expected)
@@ -47,7 +47,7 @@ exports[`sendAgentRequest offline fallback > analyses a losing run, martingale q
 **FINDING:** Strategy shows net negative P&L of $5000.00 — consistent with the theoretical house edge.
 
 **MATH:**
-• Banker EV (5% commission): -1.06% per unit
+• Banker EV (Standard rules): -1.06% per unit
 • Player EV: -1.24% per unit
 • Observed ROI: -11.4181%
 • Deviation from the -14.36% expected return of the bets placed: 2.9415% (above expected)
@@ -97,7 +97,7 @@ exports[`sendAgentRequest offline fallback > analyses a small run, martingale qu
 **FINDING:** Strategy shows net positive P&L of $3978.50 over 30 shoes, but this likely reflects variance rather than structural edge.
 
 **MATH:**
-• Banker EV (5% commission): -1.06% per unit
+• Banker EV (Standard rules): -1.06% per unit
 • Player EV: -1.24% per unit
 • Observed ROI: 4.4142%
 • Deviation from the -1.06% expected return of the bets placed: 5.4721% (above expected)
@@ -195,6 +195,7 @@ exports[`sendAgentRequest with the API > reads the honesty score and confidence 
 - Banker win: 45.86% | EV with 5% commission: -1.06% per unit
 - Player win: 44.62% | EV: -1.24% per unit
 - Tie: 9.52% | EV with 8:1 payout: -14.36% per unit
+- Other real table rules change only the Banker bet: 4% commission -0.60%, EZ Baccarat (Banker three-card 7 pushes) -1.02%, Super 6 (Banker 6 pays 1:2) -1.46%. Every Banker EV stays negative.
 
 ## Your Mandate
 For any strategy submitted, you:

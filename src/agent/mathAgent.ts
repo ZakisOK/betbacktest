@@ -5,7 +5,8 @@
  * mathematical analysis engine for offline/fallback operation.
  */
 
-import type { Strategy, BacktestResults, AgentMessage, BetSide } from '../types'
+import type { Strategy, BacktestResults, AgentMessage, BetSide, TableRules } from '../types'
+import { TABLE_RULES, expectedValue, handDistribution, settleBet } from '../engine/tableRules'
 import { askAgent, type AgentTurn } from './agentApi'
 
 // ────────────────────────────────────────────────────────────
@@ -18,6 +19,7 @@ const SYSTEM_PROMPT = `You are an expert Baccarat mathematics agent — a specia
 - Banker win: 45.86% | EV with 5% commission: -1.06% per unit
 - Player win: 44.62% | EV: -1.24% per unit
 - Tie: 9.52% | EV with 8:1 payout: -14.36% per unit
+- Other real table rules change only the Banker bet: 4% commission -0.60%, EZ Baccarat (Banker three-card 7 pushes) -1.02%, Super 6 (Banker 6 pays 1:2) -1.46%. Every Banker EV stays negative.
 
 ## Your Mandate
 For any strategy submitted, you:
@@ -63,6 +65,7 @@ Be mathematically precise. Never provide vague qualitative advice — always inc
 // ────────────────────────────────────────────────────────────
 
 interface LocalAnalysis {
+  table_rules: TableRules
   ev_banker: number
   ev_player: number
   progression_bust_probability: number
@@ -71,11 +74,9 @@ interface LocalAnalysis {
   key_findings: string[]
 }
 
-// Exact 8-deck outcome probabilities: they give the glossary EVs of Banker
-// -1.06% (5% commission), Player -1.24% and Tie -14.36%.
-const P_BANKER = 0.4585974
+// Exact 8-deck chance of a Player win: the run of Banker losses a progression
+// has to survive
 const P_PLAYER = 0.4462466
-const P_TIE = 0.095156
 
 // Below this many bets the normal approximation behind the score is too rough to report
 const MIN_BETS_FOR_SCORE = 100
@@ -99,27 +100,28 @@ interface Moments {
   variance: number
 }
 
-// Return per unit staked for each outcome, as the simulator's computePnL pays it
-function sideMoments(side: BetSide, commission: number, tieHandling: 'push' | 'lose'): Moments {
-  const onTie = tieHandling === 'lose' ? -1 : 0
-  let outcomes: Array<[probability: number, payout: number]>
-  if (side === 'Banker') outcomes = [[P_BANKER, 1 - commission], [P_PLAYER, -1], [P_TIE, onTie]]
-  else if (side === 'Player') outcomes = [[P_PLAYER, 1], [P_BANKER, -1], [P_TIE, onTie]]
-  else outcomes = [[P_TIE, 8], [P_BANKER + P_PLAYER, -1]]
-  const ev = outcomes.reduce((s, [p, x]) => s + p * x, 0)
-  const variance = outcomes.reduce((s, [p, x]) => s + p * x * x, 0) - ev * ev
-  return { ev, variance }
+// Return per unit staked over every settled hand, paid by settleBet exactly as
+// the simulator pays it, so EZ Baccarat and Super 6 payouts count too
+function sideMoments(side: BetSide, rules: TableRules, deckCount: 6 | 8, tieHandling: 'push' | 'lose'): Moments {
+  let ev = 0
+  let secondMoment = 0
+  for (const { hand, probability } of handDistribution(deckCount)) {
+    const payout = settleBet(side, 1, hand, rules, tieHandling)
+    ev += probability * payout
+    secondMoment += probability * payout * payout
+  }
+  return { ev, variance: secondMoment - ev * ev }
 }
 
 // Rules and progressions decide which side is bet and how much, and many hands
 // carry no bet at all, so the expected return and its spread are built from
 // each bet placed rather than from the hand count and the Banker EV.
 function honestyTest(results: BacktestResults): HonestyTest {
-  const { commission_rate, tie_handling } = results.config
+  const { table_rules, deck_count, tie_handling } = results.config
   const moments: Record<BetSide, Moments> = {
-    Banker: sideMoments('Banker', commission_rate, tie_handling),
-    Player: sideMoments('Player', commission_rate, tie_handling),
-    Tie: sideMoments('Tie', commission_rate, tie_handling),
+    Banker: sideMoments('Banker', table_rules, deck_count, tie_handling),
+    Player: sideMoments('Player', table_rules, deck_count, tie_handling),
+    Tie: sideMoments('Tie', table_rules, deck_count, tie_handling),
   }
 
   let bets = 0
@@ -149,11 +151,12 @@ function honestyTest(results: BacktestResults): HonestyTest {
 }
 
 function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): LocalAnalysis {
-  const commission = results?.config.commission_rate ?? 0.05
+  const tableRules = results?.config.table_rules ?? 'commission_5'
+  const deckCount = results?.config.deck_count ?? 8
 
   // EV calculations (a Tie pushes Banker and Player bets)
-  const evBanker = P_BANKER * (1 - commission) - P_PLAYER
-  const evPlayer = P_PLAYER - P_BANKER
+  const evBanker = expectedValue('Banker', tableRules, deckCount)
+  const evPlayer = expectedValue('Player', tableRules, deckCount)
 
   // Martingale analysis
   const base = strategy.base_unit
@@ -189,6 +192,7 @@ function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): L
   }
 
   return {
+    table_rules: tableRules,
     ev_banker: evBanker,
     ev_player: evPlayer,
     progression_bust_probability: shoeBustRisk,
@@ -256,7 +260,7 @@ function findingLine(m: Metrics, results: BacktestResults): string {
 
 function recommendationSection(m: Metrics, results: BacktestResults, analysis: LocalAnalysis): string {
   if (analysis.key_findings.length === 0) {
-    return `**RECOMMENDATION:** Strategy parameters appear conservative. Consider tightening stop-loss triggers and exploring lower commission variants (EZ Baccarat at 0%) to improve effective EV.\n`
+    return `**RECOMMENDATION:** Strategy parameters appear conservative. Tightening stop-loss triggers limits drawdown, but no table rules or parameter change make the expected value of any bet positive.\n`
   }
   let content = `**RECOMMENDATION:**\n`
   for (const f of analysis.key_findings) content += `⚠ ${f}\n`
@@ -274,11 +278,10 @@ function recommendationSection(m: Metrics, results: BacktestResults, analysis: L
 }
 
 function resultsAnalysis(m: Metrics, results: BacktestResults, analysis: LocalAnalysis): string {
-  const commissionPct = (results.config.commission_rate * 100).toFixed(0)
   let content = `**FINDING:** ${findingLine(m, results)}\n\n`
 
   content += `**MATH:**\n`
-  content += `• Banker EV (${commissionPct}% commission): ${percent(analysis.ev_banker)} per unit\n`
+  content += `• Banker EV (${TABLE_RULES[analysis.table_rules].label} rules): ${percent(analysis.ev_banker)} per unit\n`
   content += `• Player EV: ${percent(analysis.ev_player)} per unit\n`
   content += `• Observed ROI: ${(m.roi * 100).toFixed(4)}%\n`
   // Measured against the sides actually bet, so a Player or Tie strategy is not judged by the Banker EV
@@ -377,6 +380,7 @@ export async function sendAgentRequest(
   const metricsContext = results
     ? JSON.stringify({
         shoes: results.config.num_shoes,
+        table_rules: results.config.table_rules,
         net_pnl: results.metrics.net_pnl,
         roi: results.metrics.roi,
         win_rate: results.metrics.win_rate,

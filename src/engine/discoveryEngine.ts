@@ -169,7 +169,7 @@ export async function runDiscovery(cfg: DiscoveryConfig): Promise<DiscoveryCandi
   const simCfg: SimulationConfig = {
     num_shoes: cfg.numShoes,
     deck_count: 8,
-    commission_rate: 0.05,
+    table_rules: 'commission_5',
     cut_card_position: 14,
     tie_handling: 'push',
     starting_bankroll: cfg.bankroll,

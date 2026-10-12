@@ -42,7 +42,7 @@ const DEFAULT_STRATEGY: Strategy = {
 const DEFAULT_SIM_CONFIG: SimulationConfig = {
   num_shoes: 1000,
   deck_count: 8,
-  commission_rate: 0.05,
+  table_rules: "commission_5",
   cut_card_position: 14,
   tie_handling: "push",
   starting_bankroll: 5000,
@@ -474,7 +474,6 @@ export const useStore = create<AppStore>()(
           "modifiers.max_bet",
           "modifiers.bankroll_guard",
           "modifiers.time_decay",
-          "modifiers.commission_override",
           "modifiers.shoe_reset",
           "label",
           "enabled",
@@ -515,6 +514,26 @@ export const useStore = create<AppStore>()(
     }),
     {
       name: "baccarat-dashboard",
+      version: 1,
+      // Version 0 saved a free commission_rate (0–10%); anything below about
+      // 2.69% gave Banker a positive EV. Map it onto a real table.
+      migrate: (persisted, version) => {
+        const state = persisted as {
+          simConfig?: Omit<SimulationConfig, "table_rules"> & { commission_rate?: number };
+        };
+        if (version < 1 && state.simConfig) {
+          const { commission_rate, ...simConfig } = state.simConfig;
+          return {
+            ...state,
+            simConfig: {
+              ...simConfig,
+              table_rules:
+                Math.abs((commission_rate ?? 0.05) - 0.04) < 0.001 ? "commission_4" : "commission_5",
+            },
+          } as AppStore;
+        }
+        return state as AppStore;
+      },
       partialize: (state) => ({
         savedStrategies: state.savedStrategies,
         simConfig: state.simConfig,

@@ -272,7 +272,6 @@ export const RuleEditor: React.FC<Props> = ({ rule, onSave, onClose }) => {
             <div className="grid grid-cols-2 gap-3">
               <F label="Max Bet ($)"><Inp type="number" min={0} value={modifiers.max_bet??''} placeholder="None" onChange={e => uM({ max_bet: e.target.value ? +e.target.value : undefined })}/></F>
               <F label="Bankroll Guard (%)"><Inp type="number" min={0} max={100} step={1} value={modifiers.bankroll_guard ? modifiers.bankroll_guard*100 : ''} placeholder="None" onChange={e => uM({ bankroll_guard: e.target.value ? +e.target.value/100 : undefined })}/></F>
-              <F label="Commission Override (%)"><Inp type="number" min={0} max={10} step={0.5} value={modifiers.commission_override != null ? modifiers.commission_override*100 : ''} placeholder="Global" onChange={e => uM({ commission_override: e.target.value ? +e.target.value/100 : undefined })}/></F>
               <F label="Shoe Reset">
                 <Sel value={modifiers.shoe_reset??'carry'} onChange={e => uM({ shoe_reset: e.target.value as 'carry'|'reset' })}>
                   <option value="carry">Carry Across</option>

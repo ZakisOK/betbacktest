@@ -1,5 +1,6 @@
 import React from 'react'
-import type { SimulationConfig } from '../../types'
+import type { SimulationConfig, TableRules } from '../../types'
+import { TABLE_RULES, TABLE_RULE_IDS, expectedValue } from '../../engine/tableRules'
 
 interface Props { config: SimulationConfig; onChange: (u: Partial<SimulationConfig>) => void }
 
@@ -27,7 +28,7 @@ const SliderField: React.FC<{
 
 export const SimConfig: React.FC<Props> = ({ config, onChange }) => {
   const fmtK   = (v: number) => v >= 1000 ? `${(v/1000).toFixed(0)}K` : String(v)
-  const fmtPct = (v: number) => `${(v*100).toFixed(1)}%`
+  const fmtEv  = (v: number) => `${v < 0 ? '−' : '+'}${Math.abs(v*100).toFixed(2)}%`
   const fmtDol = (v: number) => `$${v.toLocaleString()}`
 
   return (
@@ -51,7 +52,16 @@ export const SimConfig: React.FC<Props> = ({ config, onChange }) => {
         </div>
       </div>
 
-      <SliderField label="Commission Rate"   value={config.commission_rate}  min={0}   max={0.1} step={0.005} fmt={fmtPct} onChange={v => onChange({ commission_rate: v })}/>
+      <div className="mb-3">
+        <div className="section-label mb-1">Table Rules</div>
+        <select value={config.table_rules} onChange={e => onChange({ table_rules: e.target.value as TableRules })}
+          className="input-glass w-full px-2 py-1.5 text-xs">
+          {TABLE_RULE_IDS.map(id => <option key={id} value={id}>{TABLE_RULES[id].label}</option>)}
+        </select>
+        <div className="text-[9px] text-white/40 mt-1">
+          {TABLE_RULES[config.table_rules].bankerRule} · Banker EV {fmtEv(expectedValue('Banker', config.table_rules, config.deck_count))} per unit
+        </div>
+      </div>
       <SliderField label="Starting Bankroll" value={config.starting_bankroll}min={500} max={50000} step={500} fmt={fmtDol} onChange={v => onChange({ starting_bankroll: v })}/>
       <SliderField label="Cut Card Position" value={config.cut_card_position}min={10}  max={20}   onChange={v => onChange({ cut_card_position: v })}/>
 

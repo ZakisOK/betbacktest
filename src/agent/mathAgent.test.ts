@@ -97,7 +97,7 @@ describe('honesty score', () => {
 
   it('shows the glossary Banker and Player EVs in the MATH section', async () => {
     const { content } = await analyse(flat('Tie'), 20)
-    expect(content).toContain('• Banker EV (5% commission): -1.06% per unit')
+    expect(content).toContain('• Banker EV (Standard rules): -1.06% per unit')
     expect(content).toContain('• Player EV: -1.24% per unit')
   })
 

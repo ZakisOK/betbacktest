@@ -19,6 +19,10 @@ SonarCloud and CodeRabbit also review every pull request through their GitHub ap
 Vitest characterization tests sit beside the code they pin:
 
 - `src/engine/baccarat.test.ts`: shoe composition and seeded determinism.
+- `src/engine/tableRules.test.ts`: exact 6- and 8-deck outcome probabilities, a
+  negative EV for every bet under every table ruleset, deck count and tie
+  handling, the EV figures in `glossary.md`, and how the simulator pays Banker
+  wins under each ruleset.
 - `src/engine/engine.test.ts`: the seeded PRNG, shoe and hand dealing,
   hands dealt per shoe up to the cut card, outcome probabilities against
   the glossary, `runSimulation` across every trigger, action and progression, metrics,

@@ -218,7 +218,7 @@ describe('runSimulation', () => {
 
   it.each([
     ['6 decks', { deck_count: 6 }],
-    ['ties lose, no commission', { tie_handling: 'lose', commission_rate: 0 }],
+    ['ties lose, EZ Baccarat', { tie_handling: 'lose', table_rules: 'ez_baccarat' }],
     ['early cut card', { cut_card_position: 60 }],
     ['other seed', { random_seed: 2026 }],
   ] as const)('config: %s', async (_name, overrides) => {
