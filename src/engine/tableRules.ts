@@ -27,6 +27,11 @@ export interface ResolvedHand {
   bankerCardCount: number;
 }
 
+function handOutcome(playerValue: number, bankerValue: number): HandOutcome {
+  if (playerValue === bankerValue) return "Tie";
+  return bankerValue > playerValue ? "Banker" : "Player";
+}
+
 /** Units paid per unit staked on a winning Banker bet; 0 means the bet pushes. */
 export function bankerWinPayout(rules: TableRules, hand: ResolvedHand): number {
   switch (rules) {
@@ -101,8 +106,7 @@ export function handDistribution(deckCount: 6 | 8): WeightedHand[] {
     bankerCardCount: number,
     probability: number
   ): void => {
-    const outcome: HandOutcome =
-      playerValue === bankerValue ? "Tie" : bankerValue > playerValue ? "Banker" : "Player";
+    const outcome = handOutcome(playerValue, bankerValue);
     const key = `${outcome}:${bankerValue}:${bankerCardCount}`;
     const entry = byKey.get(key);
     if (entry) entry.probability += probability;
@@ -122,25 +126,22 @@ export function handDistribution(deckCount: 6 | 8): WeightedHand[] {
     draw((card, p) => record(playerValue, (bankerValue + card) % 10, 3, probability * p));
   };
 
-  draw((p1, w1) =>
-    draw((p2, w2) =>
-      draw((b1, w3) =>
-        draw((b2, w4) => {
-          const probability = w1 * w2 * w3 * w4;
-          const playerValue = (p1 + p2) % 10;
-          const bankerValue = (b1 + b2) % 10;
-          if (isNatural(playerValue) || isNatural(bankerValue)) {
-            record(playerValue, bankerValue, 2, probability);
-          } else if (playerDraws(playerValue)) {
-            draw((card, p) =>
-              bankerTurn((playerValue + card) % 10, bankerValue, card, probability * p)
-            );
-          } else {
-            bankerTurn(playerValue, bankerValue, null, probability);
-          }
-        })
-      )
-    )
+  // Two cards off the shoe, still without replacement: their total and joint probability
+  const drawPair = (next: (total: number, probability: number) => void): void =>
+    draw((first, w1) => draw((second, w2) => next((first + second) % 10, w1 * w2)));
+
+  const playOpening = (playerValue: number, bankerValue: number, probability: number): void => {
+    if (isNatural(playerValue) || isNatural(bankerValue)) {
+      record(playerValue, bankerValue, 2, probability);
+    } else if (playerDraws(playerValue)) {
+      draw((card, p) => bankerTurn((playerValue + card) % 10, bankerValue, card, probability * p));
+    } else {
+      bankerTurn(playerValue, bankerValue, null, probability);
+    }
+  };
+
+  drawPair((playerValue, wp) =>
+    drawPair((bankerValue, wb) => playOpening(playerValue, bankerValue, wp * wb))
   );
 
   const distribution = [...byKey.values()];

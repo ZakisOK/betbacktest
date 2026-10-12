@@ -527,7 +527,8 @@ export const useStore = create<AppStore>()(
             ...state,
             simConfig: {
               ...simConfig,
-              table_rules: commission_rate === 0.04 ? "commission_4" : "commission_5",
+              table_rules:
+                Math.abs((commission_rate ?? 0.05) - 0.04) < 0.001 ? "commission_4" : "commission_5",
             },
           } as AppStore;
         }
