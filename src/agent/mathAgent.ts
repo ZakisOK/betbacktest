@@ -51,9 +51,9 @@ Structure EVERY response with these exact sections:
 
 ## Critical Truth
 No betting system alters the mathematical house edge. A strategy with positive backtest results over finite samples is displaying variance, not edge. Your role is to:
-- Minimize effective house edge through selective betting
+- Match bet size and stop-loss limits to the bankroll; selective betting changes how much is staked, never the expected value per unit
 - Manage variance to extend playtime and reduce ruin probability
-- Identify conditions where short-term positive expectation is most plausible
+- Quantify how far short-term results can swing from the expected return by chance alone
 - Optimize the cost/entertainment ratio
 
 Be mathematically precise. Never provide vague qualitative advice — always include formulas and specific parameter values.`
@@ -151,19 +151,16 @@ function honestyTest(results: BacktestResults): HonestyTest {
 function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): LocalAnalysis {
   const commission = results?.config.commission_rate ?? 0.05
 
-  // EV calculations
-  const pBanker = 0.4586
-  const pPlayer = 0.4462
-  const pTie = 0.0952
-  const evBanker = pBanker * (1 - commission) - pPlayer - pTie * 0
-  const evPlayer = pPlayer - pBanker - pTie * 0
+  // EV calculations (a Tie pushes Banker and Player bets)
+  const evBanker = P_BANKER * (1 - commission) - P_PLAYER
+  const evPlayer = P_PLAYER - P_BANKER
 
   // Martingale analysis
   const base = strategy.base_unit
   const maxBet = Math.max(...strategy.rules.map((r) => r.modifiers.max_bet ?? Infinity))
   const maxLevels = Number.isFinite(maxBet) ? Math.floor(Math.log2(maxBet / base)) : 10
   const bustAfterLosses = maxLevels + 1
-  const progBustProb = Math.pow(pPlayer, bustAfterLosses)
+  const progBustProb = Math.pow(P_PLAYER, bustAfterLosses)
 
   // Per-shoe attempts at a bust sequence: the hands each shoe actually dealt,
   // or a typical 8-deck shoe before any backtest has run
@@ -278,14 +275,18 @@ function recommendationSection(m: Metrics, results: BacktestResults, analysis: L
 
 function resultsAnalysis(m: Metrics, results: BacktestResults, analysis: LocalAnalysis): string {
   const commissionPct = (results.config.commission_rate * 100).toFixed(0)
-  const direction = m.roi > analysis.ev_banker ? 'above' : 'below'
   let content = `**FINDING:** ${findingLine(m, results)}\n\n`
 
   content += `**MATH:**\n`
-  content += `• Banker EV (${commissionPct}% commission): ${(analysis.ev_banker * 100).toFixed(4)}% per unit\n`
-  content += `• Player EV: ${(analysis.ev_player * 100).toFixed(4)}% per unit\n`
+  content += `• Banker EV (${commissionPct}% commission): ${percent(analysis.ev_banker)} per unit\n`
+  content += `• Player EV: ${percent(analysis.ev_player)} per unit\n`
   content += `• Observed ROI: ${(m.roi * 100).toFixed(4)}%\n`
-  content += `• Deviation from theoretical: ${((m.roi - analysis.ev_banker) * 100).toFixed(4)}% (${direction} expected)\n`
+  // Measured against the sides actually bet, so a Player or Tie strategy is not judged by the Banker EV
+  if (analysis.honesty && analysis.honesty.bets > 0) {
+    const expected = analysis.honesty.expected_roi
+    const direction = m.roi > expected ? 'above' : 'below'
+    content += `• Deviation from the ${percent(expected)} expected return of the bets placed: ${((m.roi - expected) * 100).toFixed(4)}% (${direction} expected)\n`
+  }
   if (analysis.martingale_levels_to_bust < 20) {
     content += `• Progression bust threshold: ${analysis.martingale_levels_to_bust} consecutive losses\n`
     content += `• Per-shoe bust probability: ${(analysis.progression_bust_probability * 100).toFixed(3)}%\n`
@@ -308,7 +309,7 @@ function resultsAnalysis(m: Metrics, results: BacktestResults, analysis: LocalAn
 
 function noResultsAnalysis(strategy: Strategy, analysis: LocalAnalysis): string {
   let content = `**FINDING:** No backtest results available. Run a backtest first to enable quantitative analysis.\n\n`
-  content += `**MATH:** Theoretical Banker EV = ${(analysis.ev_banker * 100).toFixed(4)}% per unit with 5% commission. `
+  content += `**MATH:** Theoretical Banker EV = ${percent(analysis.ev_banker)} per unit with 5% commission. `
   content += `For Martingale with ${strategy.base_unit}-unit base: bust after ${analysis.martingale_levels_to_bust} consecutive losses.\n\n`
   content += `**RECOMMENDATION:** Run a backtest with at least 10,000 shoes for statistically meaningful results (700,000+ hands).\n\n`
   content += `**CONFIDENCE:** N/A — No simulation data available.\n\n**HONESTY SCORE:** N/A`
@@ -326,7 +327,7 @@ function martingaleAnalysis(strategy: Strategy, results: BacktestResults): strin
   }
   content += `Levels before bankroll exhaustion: ${levels}\n`
   content += `Total exposure at bust: $${exposure.toFixed(0)}\n`
-  content += `Probability of hitting bust sequence per shoe: ${((1 - Math.pow(1 - Math.pow(0.4462, levels), 70)) * 100).toFixed(3)}%`
+  content += `Probability of hitting bust sequence per shoe: ${((1 - Math.pow(1 - Math.pow(P_PLAYER, levels), 70)) * 100).toFixed(3)}%`
   return content
 }
 

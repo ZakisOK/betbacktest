@@ -7,12 +7,12 @@ exports[`sendAgentRequest offline fallback > analyses a large run 1`] = `
 **FINDING:** Strategy shows net negative P&L of $198.00 — consistent with the theoretical house edge.
 
 **MATH:**
-• Banker EV (5% commission): -1.0530% per unit
-• Player EV: -1.2400% per unit
+• Banker EV (5% commission): -1.06% per unit
+• Player EV: -1.24% per unit
 • Observed ROI: -1.2306%
-• Deviation from theoretical: -0.1776% (below expected)
+• Deviation from the -1.06% expected return of the bets placed: -0.1727% (below expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.131%
+• Per-shoe bust probability: 1.132%
 
 **IMPACT:**
 • Win Rate: 45.74% | Max Drawdown: $322.00
@@ -47,12 +47,12 @@ exports[`sendAgentRequest offline fallback > analyses a losing run, martingale q
 **FINDING:** Strategy shows net negative P&L of $5060.00 — consistent with the theoretical house edge.
 
 **MATH:**
-• Banker EV (5% commission): -1.0530% per unit
-• Player EV: -1.2400% per unit
+• Banker EV (5% commission): -1.06% per unit
+• Player EV: -1.24% per unit
 • Observed ROI: -11.5393%
-• Deviation from theoretical: -10.4863% (below expected)
+• Deviation from the -14.36% expected return of the bets placed: 2.8203% (above expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.015%
+• Per-shoe bust probability: 1.016%
 
 **IMPACT:**
 • Win Rate: 9.83% | Max Drawdown: $4960.00
@@ -81,7 +81,7 @@ Suggested improvements:
 Base unit: 10 | Starting bankroll: 5000
 Levels before bankroll exhaustion: 8
 Total exposure at bust: $5110
-Probability of hitting bust sequence per shoe: 10.423%",
+Probability of hitting bust sequence per shoe: 10.431%",
   "metadata": {
     "confidence": 70,
     "honesty_score": 48,
@@ -97,12 +97,12 @@ exports[`sendAgentRequest offline fallback > analyses a small run, martingale qu
 **FINDING:** Strategy shows net positive P&L of $3978.50 over 30 shoes, but this likely reflects variance rather than structural edge.
 
 **MATH:**
-• Banker EV (5% commission): -1.0530% per unit
-• Player EV: -1.2400% per unit
+• Banker EV (5% commission): -1.06% per unit
+• Player EV: -1.24% per unit
 • Observed ROI: 4.4142%
-• Deviation from theoretical: 5.4672% (above expected)
+• Deviation from the -1.06% expected return of the bets placed: 5.4721% (above expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.134%
+• Per-shoe bust probability: 1.136%
 
 **IMPACT:**
 • Win Rate: 46.33% | Max Drawdown: $2271.00
@@ -127,7 +127,7 @@ Suggested improvements:
 Base unit: 10 | Starting bankroll: 5000
 Levels before bankroll exhaustion: 8
 Total exposure at bust: $5110
-Probability of hitting bust sequence per shoe: 10.423%",
+Probability of hitting bust sequence per shoe: 10.431%",
   "metadata": {
     "confidence": 70,
     "honesty_score": 23,
@@ -142,7 +142,7 @@ exports[`sendAgentRequest offline fallback > explains that no backtest has run 1
 
 **FINDING:** No backtest results available. Run a backtest first to enable quantitative analysis.
 
-**MATH:** Theoretical Banker EV = -1.0530% per unit with 5% commission. For Martingale with 10-unit base: bust after 11 consecutive losses.
+**MATH:** Theoretical Banker EV = -1.06% per unit with 5% commission. For Martingale with 10-unit base: bust after 11 consecutive losses.
 
 **RECOMMENDATION:** Run a backtest with at least 10,000 shoes for statistically meaningful results (700,000+ hands).
 
@@ -240,9 +240,9 @@ Structure EVERY response with these exact sections:
 
 ## Critical Truth
 No betting system alters the mathematical house edge. A strategy with positive backtest results over finite samples is displaying variance, not edge. Your role is to:
-- Minimize effective house edge through selective betting
+- Match bet size and stop-loss limits to the bankroll; selective betting changes how much is staked, never the expected value per unit
 - Manage variance to extend playtime and reduce ruin probability
-- Identify conditions where short-term positive expectation is most plausible
+- Quantify how far short-term results can swing from the expected return by chance alone
 - Optimize the cost/entertainment ratio
 
 Be mathematically precise. Never provide vague qualitative advice — always include formulas and specific parameter values.",
