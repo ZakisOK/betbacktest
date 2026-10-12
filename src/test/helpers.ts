@@ -48,7 +48,6 @@ export function config(overrides: Partial<SimulationConfig> = {}): SimulationCon
     num_shoes: 12,
     deck_count: 8,
     commission_rate: 0.05,
-    shuffle_type: 'imperfect',
     cut_card_position: 14,
     tie_handling: 'push',
     starting_bankroll: 5000,
