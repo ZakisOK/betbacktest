@@ -117,7 +117,6 @@ export interface Strategy {
 
 export interface SimulationConfig {
   num_shoes: number
-  hands_per_shoe: number
   deck_count: 6 | 8
   commission_rate: number
   shuffle_type: 'perfect' | 'imperfect'

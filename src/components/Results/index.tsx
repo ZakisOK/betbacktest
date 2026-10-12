@@ -108,6 +108,8 @@ export const ResultsPanel: React.FC = () => {
   }
 
   const r = backtestResults
+  // The cut card ends each shoe, so hands per shoe is measured, not configured.
+  const handsPerShoe = r.shoes.length ? Math.round(r.metrics.total_hands / r.shoes.length) : 0
   const duration = r.duration_ms < 1000 ? `${r.duration_ms.toFixed(0)}ms` : `${(r.duration_ms/1000).toFixed(2)}s`
 
   const handleExport = () => {
@@ -168,8 +170,8 @@ export const ResultsPanel: React.FC = () => {
 
         <div className="flex items-center gap-3 text-[9px] font-mono text-white/30 mb-2">
           <span className="flex items-center gap-1"><Clock size={8}/>{duration}</span>
-          <span>{r.config.num_shoes.toLocaleString()} shoes × {r.config.hands_per_shoe} hands</span>
-          <span>{(r.config.num_shoes * r.config.hands_per_shoe).toLocaleString()} total hands</span>
+          <span>{r.shoes.length.toLocaleString()} shoes × ~{handsPerShoe} hands</span>
+          <span>{r.metrics.total_hands.toLocaleString()} total hands</span>
         </div>
 
         {/* Tabs */}

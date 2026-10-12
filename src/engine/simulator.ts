@@ -512,7 +512,6 @@ function simulateShoe(
   // Burn first card
   shoe.shift();
 
-  const cutPoint = shoe.length - config.cut_card_position;
   const hands: HandResult[] = [];
   const sequence: OutcomeCode[] = [];
   const startingBankroll = state.bankroll;
@@ -530,7 +529,9 @@ function simulateShoe(
   state.consecutive_wins = { Banker: 0, Player: 0, Tie: 0 };
   state.consecutive_losses = { Banker: 0, Player: 0, Tie: 0 };
 
-  while (shoe.length > cutPoint && !state.stopped) {
+  // The cut card sits cut_card_position cards from the end of the shoe, so a
+  // new hand starts only while more cards than that remain.
+  while (shoe.length > config.cut_card_position && !state.stopped) {
     const decision = nextDecision(state, strategy.rules);
 
     if (decision.stop) {

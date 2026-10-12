@@ -168,7 +168,6 @@ export async function runDiscovery(cfg: DiscoveryConfig): Promise<DiscoveryCandi
   // Use a small shoe count to keep things fast; caller can do a deep dive on winners
   const simCfg: SimulationConfig = {
     num_shoes: cfg.numShoes,
-    hands_per_shoe: 80,
     deck_count: 8,
     commission_rate: 0.05,
     shuffle_type: 'imperfect',
