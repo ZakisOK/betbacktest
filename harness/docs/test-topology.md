@@ -15,16 +15,19 @@ SonarCloud and CodeRabbit also review every pull request through their GitHub ap
 
 ## Gaps
 
-- No automated tests. The engine in `src/engine/` is pure TypeScript and is the
-  first place tests belong: deal rules, shoe composition, metrics, and the EV
-  figures in `glossary.md` as regression anchors.
+- The Vitest suite (`npm test`) runs locally only. The workflow is a protected
+  surface, so the owner adds a `npm test` step to the Code Quality workflow.
+- Tests cover only `src/engine/engine.test.ts`: exact outcome probabilities,
+  the EV figures in `glossary.md` for every table ruleset, and how the
+  simulator settles Banker wins. Shoe composition, metrics, progressions and
+  the optimizer have no tests yet.
 - Biome, ESLint and Knip are configured but not enforced: the code does not pass them yet.
 
 ## Adding tests
 
 Use Vitest, which fits the existing Vite setup. Put engine tests beside the
-engine (`src/engine/*.test.ts`), add a `test` script to `package.json`, and add
-that script to the Code Quality workflow in the same pull request.
+engine (`src/engine/*.test.ts`); `npm test` (or `node_modules/.bin/vitest run`)
+runs them.
 
 ## Harness checks (Z.Code)
 

@@ -6,8 +6,8 @@
     "AGENTS.md": "f23749a2ff06d5b0d23de10d45c52ae453ddd4378c60a29f78ddbfb58e33f6fd"
   },
   "test_surface": {
-    "assertions": 0,
+    "assertions": 21,
     "disabled": 0,
-    "test_files": 0
+    "test_files": 1
   }
 }
