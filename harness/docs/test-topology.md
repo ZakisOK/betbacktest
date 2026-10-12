@@ -7,25 +7,42 @@ request into `main` and every push to `main`:
 
 1. `npm ci --ignore-scripts`
 2. `node_modules/.bin/tsc --noEmit`
-3. `npm test` (Vitest, config in `vitest.config.mts`)
+3. `node_modules/.bin/vitest run` (engine, parser and agent tests; config in `vitest.config.mts`)
 4. `npm run build`
 5. TruffleHog, verified secrets only
 6. CodeQL (JavaScript and TypeScript), in its own job
 
 SonarCloud and CodeRabbit also review every pull request through their GitHub apps.
 
+## Tests today
+
+Vitest characterization tests sit beside the code they pin:
+
+- `src/engine/baccarat.test.ts`: shoe composition and seeded determinism.
+- `src/engine/engine.test.ts`: the seeded PRNG, shoe and hand dealing,
+  hands dealt per shoe up to the cut card, outcome probabilities against
+  the glossary, `runSimulation` across every trigger, action and progression, metrics,
+  pattern analysis, discovery and the auto optimizer (the agent is mocked).
+- `src/utils/rules.test.ts`: `parseNLRule` over about 90 sentences (axios is
+  mocked, so the AI fallback is offline) and `ruleToSentence`.
+- `src/agent/mathAgent.test.ts`: the offline analysis, the API reply parsing and the token the client sends.
+- `src/agent/agentProxy.test.ts`: the Claude proxy in `functions/api/agent.ts` (auth, validation, quota, token cap), with its reply read by the client parser so the two sides cannot drift apart. It sits in `src/` because Cloudflare Pages treats every file under `functions/` as a possible route.
+- `src/lib/lemonsqueezy.test.ts`: the checkout message origin check.
+
+`src/test/helpers.ts` fixes `Math.random` and fingerprints large results, so a
+snapshot can pin thousands of hands. A snapshot change is a behavior change:
+review the diff before running `vitest run -u`.
+
 ## Gaps
 
-- Engine coverage is thin: `src/engine/baccarat.test.ts` covers shoe
-  composition and seeded determinism only. Still missing: deal rules, metrics,
-  and the EV figures in `glossary.md` as regression anchors.
+- No component tests; UI changes are checked in the browser.
 - Biome, ESLint and Knip are configured but not enforced: the code does not pass them yet.
 
 ## Adding tests
 
-Put engine tests beside the engine (`src/engine/*.test.ts`); Vitest picks up
-any `src/**/*.test.ts` and runs it in Node, so CI covers new tests without
-further wiring.
+Put tests beside the code they cover (`src/**/*.test.ts`); Vitest picks up
+any of them and runs it in Node, so CI covers new tests without further
+wiring.
 
 ## Harness checks (Z.Code)
 

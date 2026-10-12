@@ -3,11 +3,11 @@
     "map_count": 1
   },
   "map_hashes": {
-    "AGENTS.md": "b48dab5854efe8a0a0e9eac8cb7e3c1691dc1e4c36ca8580993c35134ad2cd5b"
+    "AGENTS.md": "53b8398053cf86d6c6cbed0d13ae73183ec49c561f72fac4d5b50c7f9526e9c1"
   },
   "test_surface": {
-    "assertions": 0,
+    "assertions": 100,
     "disabled": 0,
-    "test_files": 0
+    "test_files": 6
   }
 }

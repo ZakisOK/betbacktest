@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
-import { Sparkles, Loader2, X, CheckSquare, Square, AlertTriangle, Lightbulb, ArrowLeftRight } from 'lucide-react'
-import axios from 'axios'
+import { Sparkles, Loader2, CheckSquare, Square, AlertTriangle, Lightbulb, ArrowLeftRight } from 'lucide-react'
 import { useStore } from '../../store/useStore'
+import { askAgent } from '../../agent/agentApi'
 import type { ConceptBuilderResponse, Rule } from '../../types'
 import { ruleToSentence } from '../../utils/ruleToSentence'
 
@@ -104,6 +104,18 @@ interface Props {
   onClose: () => void
 }
 
+const SUGGESTION_COLORS = {
+  warning:  { background: 'rgba(245,158,11,0.08)', border: 'rgba(245,158,11,0.2)', text: 'rgba(253,230,138,0.8)' },
+  consider: { background: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)', text: 'rgba(147,197,253,0.8)' },
+  other:    { background: 'rgba(100,116,139,0.1)', border: 'rgba(100,116,139,0.2)', text: 'rgba(203,213,225,0.7)' },
+}
+
+function suggestionColors(type: string) {
+  if (type === 'warning') return SUGGESTION_COLORS.warning
+  if (type === 'consider') return SUGGESTION_COLORS.consider
+  return SUGGESTION_COLORS.other
+}
+
 export const StrategyConceptBuilder: React.FC<Props> = ({ onClose }) => {
   const { addRule, replaceRules, showToast } = useStore()
 
@@ -118,14 +130,12 @@ export const StrategyConceptBuilder: React.FC<Props> = ({ onClose }) => {
     setStep('loading')
     setError(null)
     try {
-      const resp = await axios.post('/api/agent', {
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
+      const raw = await askAgent({
         system: SYSTEM_PROMPT,
+        max_tokens: 2048,
         messages: [{ role: 'user', content: conceptText.trim() }],
-      }, { timeout: 30_000 })
+      }, 30_000)
 
-      const raw: string = resp.data?.content?.[0]?.text ?? ''
       const cleaned = raw.replace(/```(?:json)?/g, '').replace(/```/g, '').trim()
       let parsed: ConceptBuilderResponse
       try {
@@ -314,19 +324,18 @@ export const StrategyConceptBuilder: React.FC<Props> = ({ onClose }) => {
                   <div className="section-label mb-2">Suggestions</div>
                   <div className="space-y-2">
                     {response.suggestions.map((s, i) => {
-                      const isWarning = s.type === 'warning'
-                      const isConsider = s.type === 'consider'
+                      const colors = suggestionColors(s.type)
                       return (
                         <div key={i} className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg"
                           style={{
-                            background: isWarning ? 'rgba(245,158,11,0.08)' : isConsider ? 'rgba(59,130,246,0.08)' : 'rgba(100,116,139,0.1)',
-                            border: `1px solid ${isWarning ? 'rgba(245,158,11,0.2)' : isConsider ? 'rgba(59,130,246,0.2)' : 'rgba(100,116,139,0.2)'}`,
+                            background: colors.background,
+                            border: `1px solid ${colors.border}`,
                           }}>
-                          {isWarning && <AlertTriangle size={12} className="text-amber-400 shrink-0 mt-0.5"/>}
-                          {isConsider && <Lightbulb size={12} className="text-blue-400 shrink-0 mt-0.5"/>}
+                          {s.type === 'warning' && <AlertTriangle size={12} className="text-amber-400 shrink-0 mt-0.5"/>}
+                          {s.type === 'consider' && <Lightbulb size={12} className="text-blue-400 shrink-0 mt-0.5"/>}
                           {s.type === 'alternative' && <ArrowLeftRight size={12} className="text-slate-400 shrink-0 mt-0.5"/>}
                           <p className="text-[10px] leading-relaxed"
-                            style={{ color: isWarning ? 'rgba(253,230,138,0.8)' : isConsider ? 'rgba(147,197,253,0.8)' : 'rgba(203,213,225,0.7)' }}>
+                            style={{ color: colors.text }}>
                             {s.text}
                           </p>
                         </div>

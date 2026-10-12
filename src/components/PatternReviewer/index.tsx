@@ -12,14 +12,27 @@ import { useStore } from '../../store/useStore'
 
 interface Props { onClose: () => void }
 
-function SeverityIcon({ s }: { s: PatternFinding['severity'] }) {
+type Severity = PatternFinding['severity']
+
+const SEVERITY_COLORS: Record<Severity, { border: string; background: string }> = {
+  positive: { border: 'rgba(74,222,128,0.2)',   background: 'rgba(74,222,128,0.05)' },
+  warning:  { border: 'rgba(245,158,11,0.2)',   background: 'rgba(245,158,11,0.04)' },
+  neutral:  { border: 'rgba(147,197,253,0.15)', background: 'rgba(147,197,253,0.04)' },
+}
+
+function ringColor(value: number): string {
+  if (value >= 70) return 'rgba(74,222,128,0.9)'
+  return value >= 40 ? 'rgba(245,158,11,0.9)' : 'rgba(248,113,113,0.8)'
+}
+
+function SeverityIcon({ s }: Readonly<{ s: Severity }>) {
   if (s === 'positive') return <CheckCircle size={13} style={{ color: 'rgba(74,222,128,0.9)' }}/>
   if (s === 'warning')  return <AlertTriangle size={13} style={{ color: 'rgba(245,158,11,0.9)' }}/>
   return <TrendingUp size={13} style={{ color: 'rgba(147,197,253,0.8)' }}/>
 }
 
-function ScoreRing({ value, label }: { value: number; label: string }) {
-  const color = value >= 70 ? 'rgba(74,222,128,0.9)' : value >= 40 ? 'rgba(245,158,11,0.9)' : 'rgba(248,113,113,0.8)'
+function ScoreRing({ value, label }: Readonly<{ value: number; label: string }>) {
+  const color = ringColor(value)
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative w-14 h-14">
@@ -38,12 +51,9 @@ function ScoreRing({ value, label }: { value: number; label: string }) {
   )
 }
 
-function FindingCard({ f }: { f: PatternFinding }) {
+function FindingCard({ f }: Readonly<{ f: PatternFinding }>) {
   const [expanded, setExpanded] = useState(false)
-  const borderColor = f.severity === 'positive' ? 'rgba(74,222,128,0.2)'
-    : f.severity === 'warning' ? 'rgba(245,158,11,0.2)' : 'rgba(147,197,253,0.15)'
-  const bgColor = f.severity === 'positive' ? 'rgba(74,222,128,0.05)'
-    : f.severity === 'warning' ? 'rgba(245,158,11,0.04)' : 'rgba(147,197,253,0.04)'
+  const { border: borderColor, background: bgColor } = SEVERITY_COLORS[f.severity] ?? SEVERITY_COLORS.neutral
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ border: `1px solid ${borderColor}`, background: bgColor }}>

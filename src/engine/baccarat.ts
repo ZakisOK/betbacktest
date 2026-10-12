@@ -12,8 +12,9 @@
 
 export function mulberry32(seed: number) {
   return function (): number {
-    seed |= 0
-    seed = (seed + 0x6d2b79f5) | 0
+    // >>> 0 keeps the state a 32-bit integer. Math.trunc would not wrap.
+    seed >>>= 0
+    seed = (seed + 0x6d2b79f5) >>> 0
     let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
     t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296
@@ -132,6 +133,11 @@ export interface DealtHand {
   cardsUsed: number
 }
 
+function handOutcome(playerVal: number, bankerVal: number): HandOutcome {
+  if (playerVal === bankerVal) return 'Tie'
+  return bankerVal > playerVal ? 'Banker' : 'Player'
+}
+
 /**
  * Deals a complete Baccarat hand from the shoe array (mutates shoe by splice).
  * shoe is dealt from the front (index 0 = next card).
@@ -170,8 +176,7 @@ export function dealHand(shoe: number[]): DealtHand {
     }
   }
 
-  const outcome: HandOutcome =
-    playerVal === bankerVal ? 'Tie' : bankerVal > playerVal ? 'Banker' : 'Player'
+  const outcome = handOutcome(playerVal, bankerVal)
 
   return {
     playerCards,

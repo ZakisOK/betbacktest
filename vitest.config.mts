@@ -1,6 +1,6 @@
 import { defineConfig } from 'vitest/config'
 
-// Engine tests run in plain Node: src/engine has no DOM or React dependencies.
+// Tests run in plain Node: none of them needs a DOM or React.
 export default defineConfig({
   test: {
     environment: 'node',

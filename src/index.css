@@ -1,69 +1,126 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
 
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-banker: #3b82f6;
+  --color-banker-glow: rgba(59, 130, 246, 0.4);
+
+  --color-player: #ef4444;
+  --color-player-glow: rgba(239, 68, 68, 0.4);
+
+  --color-tie: #22c55e;
+  --color-tie-glow: rgba(34, 197, 94, 0.4);
+
+  --color-surface-700: rgba(255, 255, 255, 0.1);
+  --color-surface-800: rgba(255, 255, 255, 0.06);
+  --color-surface-850: rgba(255, 255, 255, 0.04);
+  --color-surface-900: rgba(255, 255, 255, 0.02);
+  --color-surface-950: #020817;
+
+  --font-mono: JetBrains Mono, Fira Code, Consolas, monospace;
+  --font-sans: Inter, system-ui, sans-serif;
+
+  --background-image-mesh:
+    radial-gradient(
+      ellipse 80% 60% at 20% 10%,
+      rgba(59, 130, 246, 0.12) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 60% 60% at 80% 80%,
+      rgba(99, 102, 241, 0.1) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 60% 40%,
+      rgba(16, 185, 129, 0.06) 0%,
+      transparent 40%
+    ),
+    linear-gradient(180deg, #020817 0%, #030d1a 100%);
+
+  --animate-slide-in: slideIn 0.25s ease-out;
+  --animate-pulse-glow: pulseGlow 2s ease-in-out infinite;
+  --animate-fade-in: fadeIn 0.3s ease-out;
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes pulseGlow {
+    0%,
+    100% {
+      box-shadow: 0 0 16px rgba(59, 130, 246, 0.3);
+    }
+    50% {
+      box-shadow: 0 0 32px rgba(59, 130, 246, 0.6);
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
 @layer base {
-  * {
-    box-sizing: border-box;
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
   }
+}
 
-  button,
-  a,
-  [role="button"] {
-    touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
+/*
+  Tailwind CSS v4 colors placeholders with the text color at half opacity.
+  Keep v3's gray for fields that don't set their own.
+*/
+@layer base {
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-gray-400);
   }
+}
 
-  html {
-    font-family: "Inter", system-ui, -apple-system, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-y: auto;
-  }
-
-  body {
-    margin: 0;
-    padding: 0;
-    background: #020817;
-    overflow-y: auto;
-  }
-
-  ::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
-  }
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
-  }
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  input[type="range"]:focus {
-    outline: none;
-  }
-
-  /* Accessible focus ring for keyboard navigation */
-  :focus-visible {
-    outline: 2px solid rgba(99, 102, 241, 0.8);
-    outline-offset: 2px;
-  }
-  :focus:not(:focus-visible) {
-    outline: none;
+/*
+  Tailwind CSS v4 gives buttons the browser's default cursor. Keep the v3
+  pointer so clickable controls still look clickable.
+*/
+@layer base {
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
   }
 }
 
 /* ────────────────────────────────────────────────────────────
    Glass Design System
    ──────────────────────────────────────────────────────────── */
+
+/*
+  Plain classes rather than @utility: nothing uses them with variants or
+  @apply, and the layers keep the v3 order, so Tailwind utilities still
+  override them.
+*/
 @layer components {
   /* Base glass card */
   .glass {
@@ -129,8 +186,9 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   }
 
+  /* Opaque stops keep white text at 4.5:1 or better on every part of the gradient. */
   .btn-primary {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(99, 102, 241, 0.9));
+    background: linear-gradient(135deg, rgb(37, 99, 235), rgb(79, 70, 229));
     border: 1px solid rgba(99, 102, 241, 0.5);
     backdrop-filter: blur(8px);
     border-radius: 10px;
@@ -141,7 +199,7 @@
   }
 
   .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 1), rgba(99, 102, 241, 1));
+    background: linear-gradient(135deg, rgb(29, 78, 216), rgb(67, 56, 202));
     box-shadow:
       0 8px 32px rgba(59, 130, 246, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.1) inset;
@@ -202,7 +260,7 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 6px;
     font-size: 10px;
-    font-family: "JetBrains Mono", monospace;
+    font-family: 'JetBrains Mono', monospace;
     padding: 1px 6px;
     color: rgba(255, 255, 255, 0.5);
   }
@@ -211,16 +269,18 @@
   .glow-blue {
     box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
   }
+
   .glow-green {
     box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
   }
+
   .glow-red {
     box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
   }
 
   /* Section label */
   .section-label {
-    font-family: "JetBrains Mono", monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 10px;
     font-weight: 600;
     letter-spacing: 0.15em;
@@ -234,6 +294,7 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
@@ -259,6 +320,82 @@
     background-clip: text;
   }
 
+  .animate-slide-in {
+    animation: slideIn 0.25s ease-out;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* On touch devices, rule card action icons are always visible */
+  @media (hover: none) {
+    .rule-card-actions {
+      opacity: 1 !important;
+    }
+  }
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-y: auto;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: #020817;
+    overflow-y: auto;
+  }
+
+  ::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="range"]:focus {
+    outline: none;
+  }
+
+  /* Accessible focus ring for keyboard navigation */
+  :focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.8);
+    outline-offset: 2px;
+  }
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer utilities {
   @keyframes slideIn {
     from {
       opacity: 0;
@@ -268,9 +405,6 @@
       opacity: 1;
       transform: translateY(0);
     }
-  }
-  .animate-slide-in {
-    animation: slideIn 0.25s ease-out;
   }
 
   @keyframes shimmer {
@@ -289,16 +423,6 @@
     }
     50% {
       box-shadow: 0 0 32px rgba(59, 130, 246, 0.6);
-    }
-  }
-  .animate-pulse-glow {
-    animation: pulseGlow 2s ease-in-out infinite;
-  }
-
-  /* On touch devices, rule card action icons are always visible */
-  @media (hover: none) {
-    .rule-card-actions {
-      opacity: 1 !important;
     }
   }
 }

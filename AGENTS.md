@@ -11,7 +11,7 @@ Read by every coding agent (Claude Code, Codex, Kiro and any AGENTS.md reader). 
 
 - language: TypeScript (strict)
 - build: npm; `npm run build` runs `tsc` then `vite build`
-- tests: Vitest engine tests (`npm test`), plus `tsc --noEmit` and the build
+- tests: Vitest snapshot tests (`npm test`) pin the engine, rule parser and agent output; with `tsc --noEmit` and the build, they are the trusted checks
 - entry points: `src/App.tsx` (routes), `src/engine/simulator.ts` (backtest core), `functions/api/agent.ts` (Claude proxy)
 
 ## Commands

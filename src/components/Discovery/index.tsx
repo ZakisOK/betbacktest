@@ -22,10 +22,22 @@ const METRIC_LABELS: Record<string, string> = {
 
 interface Props { onClose: () => void }
 
+const MEDALS = ['🥇', '🥈', '🥉']
+const MEDAL_COLORS = ['rgba(251,191,36,0.9)', 'rgba(156,163,175,0.9)', 'rgba(180,120,60,0.9)']
+
+function medalColor(i: number): string {
+  return MEDAL_COLORS[i] ?? 'rgba(255,255,255,0.3)'
+}
+
+// Rough wall-clock time for a full run at this many shoes per candidate.
+function runTimeEstimate(shoes: number): string {
+  if (shoes <= 50) return '30s'
+  return shoes <= 200 ? '2min' : '5min'
+}
+
 export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
   const { currentStrategy, loadStrategy } = useStore()
 
-  const [running,    setRunning]   = useState(false)
   const [done,       setDone]      = useState(0)
   const [total,      setTotal]     = useState(0)
   const [best,       setBest]      = useState<DiscoveryCandidate | null>(null)
@@ -38,7 +50,6 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
 
   const start = useCallback(async () => {
     abortRef.current = new AbortController()
-    setRunning(true)
     setPhase('running')
     setDone(0); setTotal(0); setBest(null); setResults([])
 
@@ -56,13 +67,11 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
     })
 
     setResults(allResults.slice(0, 20))
-    setRunning(false)
     setPhase('done')
   }, [currentStrategy.base_unit, currentStrategy.bankroll, shoes, metric])
 
   const stop = () => {
     abortRef.current?.abort()
-    setRunning(false)
     setPhase(results.length > 0 ? 'done' : 'idle')
   }
 
@@ -82,11 +91,6 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
       case 'roi':           return fmt(m.roi * 100) + '%'
     }
   }
-
-  const medalColor = (i: number) =>
-    i === 0 ? 'rgba(251,191,36,0.9)' :
-    i === 1 ? 'rgba(156,163,175,0.9)' :
-    i === 2 ? 'rgba(180,120,60,0.9)' : 'rgba(255,255,255,0.3)'
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -199,7 +203,7 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
                   }}>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold w-4 shrink-0" style={{ color: medalColor(i) }}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`}
+                      {MEDALS[i] ?? `#${i + 1}`}
                     </span>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-white/75 truncate group-hover:text-white transition-colors">{c.label}</div>
@@ -230,7 +234,7 @@ export const DiscoveryPanel: React.FC<Props> = ({ onClose }) => {
           {phase === 'idle' && (
             <button onClick={start} className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 text-sm">
               <Zap size={13}/>Start Discovery
-              <span className="text-xs opacity-55 font-normal">~{shoes <= 50 ? '30s' : shoes <= 200 ? '2min' : '5min'}</span>
+              <span className="text-xs opacity-55 font-normal">~{runTimeEstimate(shoes)}</span>
             </button>
           )}
           {phase === 'running' && (

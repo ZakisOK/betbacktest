@@ -67,32 +67,32 @@ export const RuleCard: React.FC<Props> = ({ rule, index, total, onUpdate, onRemo
                   <span className="text-[9px] text-white/50 mr-0.5">Delete?</span>
                   <button
                     onClick={() => { onRemove(rule.id); setConfirming(false) }}
-                    className="px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors"
+                    className="px-1.5 py-0.5 rounded-sm text-[9px] font-bold transition-colors"
                     style={{ background: 'rgba(239,68,68,0.2)', border: '1px solid rgba(239,68,68,0.35)', color: 'rgba(248,113,113,0.9)' }}
                   >Yes</button>
                   <button
                     onClick={() => setConfirming(false)}
-                    className="px-1.5 py-0.5 rounded text-[9px] font-medium text-white/40 hover:text-white/70 transition-colors"
+                    className="px-1.5 py-0.5 rounded-sm text-[9px] font-medium text-white/40 hover:text-white/70 transition-colors"
                     style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
                   >Cancel</button>
                 </div>
               ) : (
                 <div className="rule-card-actions flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button onClick={() => onUpdate(rule.id, { enabled: !rule.enabled })} title={rule.enabled ? 'Disable' : 'Enable'}
-                    className="p-1 rounded transition-colors text-white/40 hover:text-white/80">
+                    className="p-1 rounded-sm transition-colors text-white/40 hover:text-white/80">
                     {rule.enabled ? <Eye size={11}/> : <EyeOff size={11}/>}
                   </button>
                   <button onClick={() => onMove(rule.id, 'up')} disabled={index === 0}
-                    className={`p-1 rounded transition-colors ${index === 0 ? 'opacity-20 cursor-not-allowed' : 'text-white/40 hover:text-white/80'}`}>
+                    className={`p-1 rounded-sm transition-colors ${index === 0 ? 'opacity-20 cursor-not-allowed' : 'text-white/40 hover:text-white/80'}`}>
                     <ChevronUp size={11}/>
                   </button>
                   <button onClick={() => onMove(rule.id, 'down')} disabled={index === total - 1}
-                    className={`p-1 rounded transition-colors ${index === total - 1 ? 'opacity-20 cursor-not-allowed' : 'text-white/40 hover:text-white/80'}`}>
+                    className={`p-1 rounded-sm transition-colors ${index === total - 1 ? 'opacity-20 cursor-not-allowed' : 'text-white/40 hover:text-white/80'}`}>
                     <ChevronDown size={11}/>
                   </button>
-                  <button onClick={() => setEditing(true)} title="Edit" className="p-1 rounded transition-colors text-white/40 hover:text-blue-400"><Edit3 size={11}/></button>
-                  <button onClick={() => onDuplicate(rule.id)} title="Duplicate" className="p-1 rounded transition-colors text-white/40 hover:text-emerald-400"><Copy size={11}/></button>
-                  <button onClick={() => setConfirming(true)} title="Delete" className="p-1 rounded transition-colors text-white/40 hover:text-red-400"><Trash2 size={11}/></button>
+                  <button onClick={() => setEditing(true)} title="Edit" className="p-1 rounded-sm transition-colors text-white/40 hover:text-blue-400"><Edit3 size={11}/></button>
+                  <button onClick={() => onDuplicate(rule.id)} title="Duplicate" className="p-1 rounded-sm transition-colors text-white/40 hover:text-emerald-400"><Copy size={11}/></button>
+                  <button onClick={() => setConfirming(true)} title="Delete" className="p-1 rounded-sm transition-colors text-white/40 hover:text-red-400"><Trash2 size={11}/></button>
                 </div>
               )}
             </div>
@@ -103,11 +103,11 @@ export const RuleCard: React.FC<Props> = ({ rule, index, total, onUpdate, onRemo
 
           {/* Type badges */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded"
+            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded-sm"
               style={{ background: TRIGGER_COLOR[rule.trigger.type] ?? 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.9)' }}>
               {TRIGGER_LABEL[rule.trigger.type] ?? rule.trigger.type.toUpperCase()}
             </span>
-            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded"
+            <span className="text-[8px] font-mono font-bold px-1.5 py-0.5 rounded-sm"
               style={{ background: ACTION_COLOR[rule.action.type] ?? 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.9)' }}>
               {ACTION_LABEL[rule.action.type] ?? rule.action.type.toUpperCase()}
             </span>
