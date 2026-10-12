@@ -63,7 +63,6 @@ function mkCfg(bankroll: number, shoes: number): SimulationConfig {
     num_shoes: shoes,
     deck_count: 8,
     commission_rate: 0.05,
-    shuffle_type: 'imperfect',
     cut_card_position: 14,
     tie_handling: 'push',
     starting_bankroll: bankroll,

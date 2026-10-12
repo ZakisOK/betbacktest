@@ -7,7 +7,7 @@ request into `main` and every push to `main`:
 
 1. `npm ci --ignore-scripts`
 2. `node_modules/.bin/tsc --noEmit`
-3. `node_modules/.bin/vitest run` (engine, parser and agent tests)
+3. `node_modules/.bin/vitest run` (engine, parser and agent tests; config in `vitest.config.mts`)
 4. `npm run build`
 5. TruffleHog, verified secrets only
 6. CodeQL (JavaScript and TypeScript), in its own job
@@ -18,6 +18,7 @@ SonarCloud and CodeRabbit also review every pull request through their GitHub ap
 
 Vitest characterization tests sit beside the code they pin:
 
+- `src/engine/baccarat.test.ts`: shoe composition and seeded determinism.
 - `src/engine/engine.test.ts`: the seeded PRNG, shoe and hand dealing,
   hands dealt per shoe up to the cut card, outcome probabilities against
   the glossary, `runSimulation` across every trigger, action and progression, metrics,
@@ -36,6 +37,12 @@ review the diff before running `vitest run -u`.
 
 - No component tests; UI changes are checked in the browser.
 - Biome, ESLint and Knip are configured but not enforced: the code does not pass them yet.
+
+## Adding tests
+
+Put tests beside the code they cover (`src/**/*.test.ts`); Vitest picks up
+any of them and runs it in Node, so CI covers new tests without further
+wiring.
 
 ## Harness checks (Z.Code)
 

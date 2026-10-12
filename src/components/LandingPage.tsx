@@ -18,7 +18,7 @@ const FEATURES = [
 
 const HIGHLIGHTS = [
   { icon: <Layers size={20} />, title: 'Build any strategy', body: 'Rule-based engine with 20+ trigger types and progression methods including Martingale, Fibonacci, Labouchere, and Oscar\'s Grind.' },
-  { icon: <TrendingUp size={20} />, title: 'Run millions of shoes', body: 'Simulate up to 1,000,000 shoes with Lab tier. Full 8-deck baccarat with configurable commission, cut card, and shuffle.' },
+  { icon: <TrendingUp size={20} />, title: 'Run millions of shoes', body: 'Simulate up to 1,000,000 shoes with Lab tier. Full 6- or 8-deck baccarat with configurable commission, cut card, and tie handling.' },
   { icon: <Bot size={20} />, title: 'AI tells you the truth', body: 'Every analysis includes an Honesty Score. No betting system eliminates the house edge — the AI won\'t pretend otherwise.' },
   { icon: <BarChart3 size={20} />, title: 'Full risk metrics', body: 'Sharpe ratio, Sortino, Value at Risk, Kelly Criterion, Risk of Ruin, max drawdown, and 25+ more performance metrics.' },
   { icon: <Zap size={20} />, title: 'Real-time in the browser', body: 'No server-side simulation. All computation runs locally in your browser. Your strategy data stays private.' },
