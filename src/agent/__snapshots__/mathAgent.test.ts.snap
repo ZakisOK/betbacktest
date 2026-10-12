@@ -74,7 +74,7 @@ Suggested improvements:
 
 **CONFIDENCE:** 95/100 — Based on 4,379 hands simulated.
 
-**HONESTY SCORE:** 48/100 — Nothing here but the house edge: 48 in 100 pure-chance runs of this size land at least this far from the -14.36% expected return of these bets.
+**HONESTY SCORE:** 46/100 — Nothing here but the house edge: 46 in 100 pure-chance runs of this size land at least this far from the -14.36% expected return of these bets.
 
 ---
 *Martingale Analysis for tie:*
@@ -84,7 +84,7 @@ Total exposure at bust: $5110
 Probability of hitting bust sequence per shoe: 10.423%",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 48,
+    "honesty_score": 46,
   },
   "role": "assistant",
 }
