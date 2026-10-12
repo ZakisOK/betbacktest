@@ -13,7 +13,7 @@ export const ToastContainer: React.FC = () => {
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-20 lg:bottom-6 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+    <div className="fixed bottom-20 lg:bottom-6 right-4 z-100 flex flex-col gap-2 pointer-events-none">
       {toasts.map(toast => {
         const colors = TOAST_COLORS[toast.type] ?? TOAST_COLORS.info
         return (

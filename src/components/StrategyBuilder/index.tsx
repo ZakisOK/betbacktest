@@ -110,7 +110,7 @@ export const StrategyBuilder: React.FC = () => {
               onChange={e => updateStrategyMeta({ name: e.target.value })}
               onBlur={() => setEditingName(false)}
               onKeyDown={e => e.key === 'Enter' && setEditingName(false)}
-              className="flex-1 bg-transparent border-b text-sm font-bold text-white focus:outline-none"
+              className="flex-1 bg-transparent border-b text-sm font-bold text-white focus:outline-hidden"
               style={{ borderColor: 'rgba(99,102,241,0.6)' }}
             />
           ) : (
@@ -190,7 +190,7 @@ export const StrategyBuilder: React.FC = () => {
           {savedStrategies.length === 0
             ? <p className="text-[10px] text-white/25 italic">No saved strategies yet.</p>
             : savedStrategies.map(st => (
-              <div key={st.id} className="flex items-center py-1 hover:bg-white/5 rounded px-1">
+              <div key={st.id} className="flex items-center py-1 hover:bg-white/5 rounded-sm px-1">
                 <button onClick={() => { loadStrategy(st); setShowLibrary(false) }}
                   className="flex-1 text-left text-xs text-white/60 hover:text-white/90 truncate transition-colors">{st.name}</button>
                 <button onClick={() => deleteStrategy(st.id)} className="text-white/20 hover:text-red-400 ml-2 transition-colors"><X size={10}/></button>
@@ -234,7 +234,7 @@ export const StrategyBuilder: React.FC = () => {
             <button
               onClick={() => handleNLSubmit()}
               disabled={!nlText.trim() || nlStatus === 'parsing'}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded text-[10px] font-medium transition-all"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded-sm text-[10px] font-medium transition-all"
               style={{ background: 'rgba(99,102,241,0.25)', color: 'rgba(165,180,252,0.9)' }}
             >
               {nlStatus === 'parsing' ? <Loader2 size={10} className="animate-spin"/> : 'Add'}
