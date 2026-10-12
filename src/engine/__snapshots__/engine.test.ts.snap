@@ -66,36 +66,31 @@ exports[`analyzePatterns (local) > always banker 1`] = `
 exports[`analyzePatterns (local) > martingale bust 1`] = `
 {
   "aiInsight": null,
-  "consistency_score": 0,
-  "edge_score": 75,
+  "consistency_score": 100,
+  "edge_score": 10,
   "findings": [
     {
-      "description": "PnL swings ±2276 per shoe vs avg +286. Results are noisy — larger samples needed.",
+      "description": "PnL coefficient of variation is 0.00 — results are relatively stable across shoes.",
       "id": "consistency",
       "metric": "CV",
-      "severity": "warning",
-      "suggestion": "Run 10,000+ shoes to distinguish signal from noise.",
-      "title": "High variance between shoes",
-      "value": "7.96",
+      "severity": "positive",
+      "title": "Consistent shoe performance",
+      "value": "0.00",
     },
     {
-      "description": "More than half of shoes end in profit — good foundation for the strategy.",
+      "description": "Fewer than 45% of shoes are profitable. The strategy may need tighter stop-loss or entry conditions.",
       "id": "shoe_win_rate",
       "metric": "Shoe win rate",
-      "ruleAdjustment": undefined,
-      "severity": "positive",
-      "suggestion": undefined,
-      "title": "95.0% of shoes are profitable",
-      "value": "95.0%",
-    },
-    {
-      "description": "Spearman correlation of rolling 10-shoe PnL vs shoe index: 0.47. The strategy warms up as the session progresses.",
-      "id": "trend",
-      "metric": "Trend correlation",
-      "severity": "positive",
-      "suggestion": undefined,
-      "title": "Performance is improving over the session",
-      "value": "0.47",
+      "ruleAdjustment": {
+        "current": "$120",
+        "label": "Stop-loss trigger",
+        "param": "threshold",
+        "recommended": "$64 (−8% bankroll)",
+      },
+      "severity": "warning",
+      "suggestion": "Consider adding a tighter stop-loss to cut shoe losses earlier.",
+      "title": "0.0% of shoes are profitable",
+      "value": "0.0%",
     },
     {
       "description": "High risk of ruin — the current bet sizing or stop-loss is too aggressive for the bankroll.",
@@ -107,7 +102,7 @@ exports[`analyzePatterns (local) > martingale bust 1`] = `
       "value": "100.00%",
     },
   ],
-  "top_recommendation": "Run 10,000+ shoes to distinguish signal from noise.",
+  "top_recommendation": "Consider adding a tighter stop-loss to cut shoe losses earlier.",
 }
 `;
 
@@ -20328,10 +20323,10 @@ exports[`runSimulation > action: adjust 1326 1`] = `
 
 exports[`runSimulation > action: adjust add 1`] = `
 {
-  "fingerprint": "271uzy7jmr8",
+  "fingerprint": "28z718xum7z",
   "max_drawdown": 0,
   "net_pnl": -5258.5,
-  "total_hands": 52,
+  "total_hands": 41,
   "win_rate": 0.375,
 }
 `;
@@ -20348,10 +20343,10 @@ exports[`runSimulation > action: adjust dalembert 1`] = `
 
 exports[`runSimulation > action: adjust fibonacci 1`] = `
 {
-  "fingerprint": "izirr4lht",
+  "fingerprint": "2b98apx7on4",
   "max_drawdown": 12772.5,
   "net_pnl": -6717,
-  "total_hands": 109,
+  "total_hands": 99,
   "win_rate": 0.44329896907216493,
 }
 `;
@@ -20368,10 +20363,10 @@ exports[`runSimulation > action: adjust flat 1`] = `
 
 exports[`runSimulation > action: adjust labouchere 1`] = `
 {
-  "fingerprint": "za5k82ln4w",
+  "fingerprint": "1pg9j7phq04",
   "max_drawdown": 7120.5,
   "net_pnl": -6516,
-  "total_hands": 125,
+  "total_hands": 115,
   "win_rate": 0.4247787610619469,
 }
 `;
@@ -20388,10 +20383,10 @@ exports[`runSimulation > action: adjust martingale 1`] = `
 
 exports[`runSimulation > action: adjust multiply 1`] = `
 {
-  "fingerprint": "23gufc8ng1p",
+  "fingerprint": "th1j2ozfpl",
   "max_drawdown": 0,
   "net_pnl": -11798,
-  "total_hands": 22,
+  "total_hands": 11,
   "win_rate": 0.4,
 }
 `;
@@ -20627,11 +20622,11 @@ exports[`runSimulation > reports progress 1`] = `
 
 exports[`runSimulation > stops a session and busts a bankroll 1`] = `
 {
-  "fingerprint": "g1aj2rfln4",
-  "max_drawdown": 50710,
-  "net_pnl": 30475,
-  "total_hands": 1010,
-  "win_rate": 0.4514851485148515,
+  "fingerprint": "183hclq7rzo",
+  "max_drawdown": 0,
+  "net_pnl": -1835,
+  "total_hands": 34,
+  "win_rate": 0.4117647058823529,
 }
 `;
 

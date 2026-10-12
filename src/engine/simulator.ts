@@ -45,7 +45,9 @@ interface SimState {
   last_outcomes: OutcomeCode[];
   hand_number: number;
   skip_remaining: number;
+  // stopped ends the current shoe (stop_loss, take_profit); busted ends the run.
   stopped: boolean;
+  busted: boolean;
   progression: ProgressionState;
   commission_rate: number;
 }
@@ -64,6 +66,7 @@ function initState(strategy: Strategy, config: SimulationConfig): SimState {
     hand_number: 0,
     skip_remaining: 0,
     stopped: false,
+    busted: false,
     progression: {
       level: 0,
       fibonacci: [1, 1],
@@ -568,7 +571,7 @@ function simulateShoe(
     updateState(state, outcome, decision, pnl, config);
 
     if (state.bankroll <= 0) {
-      state.stopped = true;
+      state.busted = true;
       break;
     }
   }
@@ -605,12 +608,12 @@ export async function runSimulation(
   const startTime = performance.now();
 
   for (let i = 0; i < config.num_shoes; i++) {
-    if (state.stopped) break;
+    if (state.busted) break;
 
     const shoeResult = simulateShoe(i + 1, strategy, config, state, rng);
     shoes.push(shoeResult);
 
-    // Reset session stop flag between shoes (stop_loss is per-session, not permanent)
+    // stop_loss and take_profit end only the session, so the next shoe plays on.
     state.stopped = false;
     state.session_pnl = 0;
 

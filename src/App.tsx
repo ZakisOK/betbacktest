@@ -156,7 +156,7 @@ function Dashboard() {
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="text-sm font-bold tracking-tight bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+              <span className="text-sm font-bold tracking-tight bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
                 BetBacktest
               </span>
               <span
@@ -204,7 +204,7 @@ function Dashboard() {
               <div key={p.label} className="flex items-center gap-1.5 text-[10px] font-mono">
                 <span className="text-white/30">{p.label}</span>
                 <span
-                  className={`px-1.5 py-0.5 rounded ${p.color}`}
+                  className={`px-1.5 py-0.5 rounded-sm ${p.color}`}
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   {p.value}

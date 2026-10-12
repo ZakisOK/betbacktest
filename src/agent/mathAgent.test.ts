@@ -58,13 +58,13 @@ describe('honesty score', () => {
   const flat = (side: BetSide, hand_min = 0) =>
     strategy(side, [rule(side, { type: 'hand_count', hand_min }, { type: 'place_bet', side, unit_size: 1 })])
 
-  // Runs a backtest, optionally pins its ROI, and returns the score and its line
+  // Runs a backtest, optionally pins its ROI, and returns the score, its line and the full reply
   async function analyse(s: Strategy, shoes: number, roi?: number) {
     const results = await runSimulation(s, config({ num_shoes: shoes }), () => {})
     const run = roi === undefined ? results : { ...results, metrics: { ...results.metrics, roi } }
     const reply = await sendAgentRequest('Summarize', s, run, [])
     const line = reply.content.split('\n').find((l) => l.startsWith('**HONESTY SCORE:**'))
-    return { score: reply.metadata?.honesty_score, line }
+    return { score: reply.metadata?.honesty_score, line, content: reply.content }
   }
 
   it('scores a run that matches the house edge near 100, sized by bets placed rather than hands dealt', async () => {
@@ -90,8 +90,15 @@ describe('honesty score', () => {
     ['Player', '-1.24%'],
     ['Tie', '-14.36%'],
   ] as const)('tests %s bets against the %s glossary EV', async (side, ev) => {
-    const { line } = await analyse(flat(side), 20)
+    const { line, content } = await analyse(flat(side), 20)
     expect(line).toContain(`the ${ev} expected return of these bets`)
+    expect(content).toContain(`• Deviation from the ${ev} expected return of the bets placed:`)
+  })
+
+  it('shows the glossary Banker and Player EVs in the MATH section', async () => {
+    const { content } = await analyse(flat('Tie'), 20)
+    expect(content).toContain('• Banker EV (5% commission): -1.06% per unit')
+    expect(content).toContain('• Player EV: -1.24% per unit')
   })
 
   it('drops the small-sample note once chance swings the ROI less than the house edge', async () => {

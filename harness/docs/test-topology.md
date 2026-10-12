@@ -35,7 +35,6 @@ review the diff before running `vitest run -u`.
 ## Gaps
 
 - No component tests; UI changes are checked in the browser.
-- No test yet anchors the EV figures in `glossary.md`; the outcome probabilities and hands per shoe are.
 - Biome, ESLint and Knip are configured but not enforced: the code does not pass them yet.
 
 ## Harness checks (Z.Code)

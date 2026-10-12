@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
           >
             🎴
           </div>
-          <span className="text-sm font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="text-sm font-bold bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             BetBacktest
           </span>
         </div>
@@ -85,7 +85,7 @@ export const LandingPage: React.FC = () => {
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
           Backtest Betting Strategies<br />
-          <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             with AI
           </span>
         </h1>

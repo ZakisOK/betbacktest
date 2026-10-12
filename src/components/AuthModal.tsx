@@ -93,7 +93,7 @@ export const AuthModal: React.FC<Props> = ({ mode: initialMode, onClose }) => {
           >
             🎴
           </div>
-          <span className="text-sm font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="text-sm font-bold bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             BetBacktest
           </span>
         </div>
