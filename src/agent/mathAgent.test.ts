@@ -3,10 +3,14 @@ import type { AgentMessage, BetSide, Strategy } from '../types'
 import { alwaysBanker, config, fixRandom, rule, strategy } from '../test/helpers'
 import { runSimulation } from '../engine/simulator'
 
+const { getSession } = vi.hoisted(() => ({ getSession: vi.fn() }))
+
 vi.mock('axios', () => ({ default: { post: vi.fn() } }))
+vi.mock('../lib/supabase', () => ({ supabase: { auth: { getSession } } }))
 
 const axios = (await import('axios')).default
 const { RARE_RUN_SCORE, sendAgentRequest } = await import('./mathAgent')
+const { agentReplyText } = await import('./agentApi')
 
 function stable(m: AgentMessage) {
   const { id: _id, timestamp: _t, ...rest } = m
@@ -15,6 +19,7 @@ function stable(m: AgentMessage) {
 
 beforeEach(() => {
   fixRandom()
+  getSession.mockResolvedValue({ data: { session: null } })
 })
 
 afterEach(() => {
@@ -116,10 +121,34 @@ describe('honesty score', () => {
   })
 })
 
+describe('agentReplyText', () => {
+  it.each([
+    ['the proxy reply', { content: 'hello' }, 'hello'],
+    ['the raw Messages API reply', { content: [{ type: 'text', text: 'hello' }] }, 'hello'],
+    ['raw text blocks, joined in order', { content: [{ type: 'text', text: 'a' }, { type: 'text', text: 'b' }] }, 'ab'],
+    ['raw blocks around a thinking block', { content: [{ type: 'thinking', thinking: 'x' }, { type: 'text', text: 'ok' }] }, 'ok'],
+    ['an untyped raw text block', { content: [{ text: 'ok' }] }, 'ok'],
+  ])('reads %s', (_name, data, text) => {
+    expect(agentReplyText(data)).toBe(text)
+  })
+
+  it.each([
+    ['an empty string', { content: '' }],
+    ['no text blocks', { content: [{ type: 'tool_use', id: 't', name: 'x', input: {} }] }],
+    ['no content', {}],
+    ['a non-text content field', { content: 5 }],
+    ['an error body', { error: 'Missing authorization header' }],
+    ['null', null],
+    ['a string body', 'hello'],
+  ])('finds no text in %s', (_name, data) => {
+    expect(agentReplyText(data)).toBeUndefined()
+  })
+})
+
 describe('sendAgentRequest with the API', () => {
   it('reads the honesty score and confidence from the reply', async () => {
     vi.mocked(axios.post).mockResolvedValue({
-      data: { content: [{ text: '**CONFIDENCE:** 77/100\n**HONESTY SCORE:** 82/100' }] },
+      data: { content: '**CONFIDENCE:** 77/100\n**HONESTY SCORE:** 82/100' },
     })
     const history: AgentMessage[] = [
       { id: '1', role: 'system', content: 'ignored', timestamp: '' },
@@ -131,8 +160,50 @@ describe('sendAgentRequest with the API', () => {
     expect(vi.mocked(axios.post).mock.calls[0]?.[1]).toMatchSnapshot()
   })
 
-  it('leaves scores empty when the reply has none', async () => {
-    vi.mocked(axios.post).mockResolvedValue({ data: {} })
-    expect(stable(await sendAgentRequest('Go', capped, null, []))).toMatchSnapshot()
+  it('reads the raw Messages API reply from an older local proxy', async () => {
+    vi.mocked(axios.post).mockResolvedValue({
+      data: { content: [{ type: 'text', text: '**CONFIDENCE:** 77/100\n**HONESTY SCORE:** 82/100' }] },
+    })
+    const out = await sendAgentRequest('Go', capped, null, [])
+    expect(out.content).toBe('**CONFIDENCE:** 77/100\n**HONESTY SCORE:** 82/100')
+    expect(out.metadata).toEqual({ honesty_score: 82, confidence: 77 })
+  })
+
+  it('leaves scores empty when the reply text has none', async () => {
+    vi.mocked(axios.post).mockResolvedValue({ data: { content: 'No sections here.' } })
+    const out = await sendAgentRequest('Go', capped, null, [])
+    expect(out.content).toBe('No sections here.')
+    expect(out.metadata).toEqual({ honesty_score: undefined, confidence: undefined })
+  })
+
+  it('sends the Supabase access token when someone is signed in', async () => {
+    getSession.mockResolvedValue({ data: { session: { access_token: 'token-123' } } })
+    vi.mocked(axios.post).mockResolvedValue({ data: { content: 'ok' } })
+    await sendAgentRequest('Go', capped, null, [])
+    expect(vi.mocked(axios.post).mock.calls[0]?.[2]).toEqual({ timeout: 30000, headers: { Authorization: 'Bearer token-123' } })
+  })
+
+  it('sends no Authorization header when nobody is signed in', async () => {
+    vi.mocked(axios.post).mockResolvedValue({ data: { content: 'ok' } })
+    await sendAgentRequest('Go', capped, null, [])
+    expect(vi.mocked(axios.post).mock.calls[0]?.[2]).toEqual({ timeout: 30000, headers: undefined })
+  })
+
+  it('sends its own system prompt, with the honesty score instruction, and no model', async () => {
+    vi.mocked(axios.post).mockResolvedValue({ data: { content: 'ok' } })
+    await sendAgentRequest('Go', capped, null, [])
+    const body = vi.mocked(axios.post).mock.calls[0]?.[1] as Record<string, unknown>
+    expect(body).not.toHaveProperty('model')
+    expect(body.system).toContain('**HONESTY SCORE:** [Copy honesty_score from [BACKTEST METRICS] as N/100')
+  })
+
+  it.each([
+    ['the reply has no text', () => vi.mocked(axios.post).mockResolvedValue({ data: { content: '' } })],
+    ['the proxy rejects the call', () => vi.mocked(axios.post).mockRejectedValue(Object.assign(new Error('Request failed with status code 401'), { status: 401 }))],
+  ])('falls back to the built-in analysis when %s', async (_name, arrange) => {
+    arrange()
+    const out = await sendAgentRequest('Go', capped, null, [])
+    expect(out.content).toMatch(/^\*\[Built-in Mathematical Analysis/)
+    expect(out.content).not.toContain('No response from agent.')
   })
 })

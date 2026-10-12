@@ -25,7 +25,10 @@ second) and can be tested in isolation. See `harness/rules/`.
 
 ## Server endpoints (`functions/api/`)
 
-- `agent.ts`: the Claude math agent. Verifies the caller's Supabase token, then enforces a daily query limit per tier (`profiles.subscription_tier`) before calling Anthropic.
+- `agent.ts`: the Claude proxy for the math agent, the rule parser and the concept builder. Verifies the caller's Supabase token, then enforces a daily query limit per tier (`profiles.subscription_tier`) before calling Anthropic.
+  Contract: `POST { system, messages, max_tokens? }` with `Authorization: Bearer <access token>`, answered with `{ content: string }`.
+  Callers own their system prompts; the endpoint owns the model and caps `max_tokens`.
+  The browser calls it only through `src/agent/agentApi.ts`, and `server.js` serves the same contract locally (Vite forwards `/api/agent` to it).
 - `generate-report.ts`: builds an HTML report with Claude and stores it in the Supabase `reports` bucket and table.
 - `webhooks/lemonsqueezy.ts`: subscription and purchase events. Verifies the HMAC `x-signature`, then updates `profiles` and `reports`.
 - `delete-account.ts`, `meta-deletion.ts`: account deletion, including Meta's signed data-deletion callback.

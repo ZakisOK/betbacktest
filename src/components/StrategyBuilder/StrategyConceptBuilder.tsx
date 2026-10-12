@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Sparkles, Loader2, CheckSquare, Square, AlertTriangle, Lightbulb, ArrowLeftRight } from 'lucide-react'
-import axios from 'axios'
 import { useStore } from '../../store/useStore'
+import { askAgent } from '../../agent/agentApi'
 import type { ConceptBuilderResponse, Rule } from '../../types'
 import { ruleToSentence } from '../../utils/ruleToSentence'
 
@@ -130,14 +130,12 @@ export const StrategyConceptBuilder: React.FC<Props> = ({ onClose }) => {
     setStep('loading')
     setError(null)
     try {
-      const resp = await axios.post('/api/agent', {
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
+      const raw = await askAgent({
         system: SYSTEM_PROMPT,
+        max_tokens: 2048,
         messages: [{ role: 'user', content: conceptText.trim() }],
-      }, { timeout: 30_000 })
+      }, 30_000)
 
-      const raw: string = resp.data?.content?.[0]?.text ?? ''
       const cleaned = raw.replace(/```(?:json)?/g, '').replace(/```/g, '').trim()
       let parsed: ConceptBuilderResponse
       try {
