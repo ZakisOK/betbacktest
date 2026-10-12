@@ -31,10 +31,10 @@ Suggested improvements:
 
 **CONFIDENCE:** 92/100 — Based on 1,629 hands simulated.
 
-**HONESTY SCORE:** 8/100 — Low sample size — results are statistically inconclusive.",
+**HONESTY SCORE:** 94/100 — Nothing here but the house edge: 94 in 100 pure-chance runs of this size land at least this far from the -1.06% expected return of these bets. Small sample: at 1,609 bets over 1,629 hands, 95% of pure-chance runs land within ±4.53% of that return, a wider range than the house edge itself. Run more shoes before reading anything into the ROI.",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 8,
+    "honesty_score": 94,
   },
   "role": "assistant",
 }
@@ -74,7 +74,7 @@ Suggested improvements:
 
 **CONFIDENCE:** 95/100 — Based on 4,379 hands simulated.
 
-**HONESTY SCORE:** 100/100 — High probability results reflect variance, not genuine edge.
+**HONESTY SCORE:** 46/100 — Nothing here but the house edge: 46 in 100 pure-chance runs of this size land at least this far from the -14.36% expected return of these bets.
 
 ---
 *Martingale Analysis for tie:*
@@ -84,7 +84,7 @@ Total exposure at bust: $5110
 Probability of hitting bust sequence per shoe: 10.423%",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 100,
+    "honesty_score": 46,
   },
   "role": "assistant",
 }
@@ -120,7 +120,7 @@ Suggested improvements:
 
 **CONFIDENCE:** 93/100 — Based on 2,452 hands simulated.
 
-**HONESTY SCORE:** 100/100 — High probability results reflect variance, not genuine edge.
+**HONESTY SCORE:** 23/100 — Nothing here but the house edge: 23 in 100 pure-chance runs of this size land at least this far from the -1.06% expected return of these bets. Small sample: at 2,422 bets over 2,452 hands, 95% of pure-chance runs land within ±8.91% of that return, a wider range than the house edge itself. Run more shoes before reading anything into the ROI.
 
 ---
 *Martingale Analysis for capped:*
@@ -130,7 +130,7 @@ Total exposure at bust: $5110
 Probability of hitting bust sequence per shoe: 10.423%",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 100,
+    "honesty_score": 23,
   },
   "role": "assistant",
 }
@@ -151,7 +151,7 @@ exports[`sendAgentRequest offline fallback > explains that no backtest has run 1
 **HONESTY SCORE:** N/A",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 50,
+    "honesty_score": undefined,
   },
   "role": "assistant",
 }
@@ -236,7 +236,7 @@ Structure EVERY response with these exact sections:
 
 **CONFIDENCE:** [0-100 score explaining statistical certainty of recommendation]
 
-**HONESTY SCORE:** [0-100. Formula: 100 × (1 - p-value from permutation test). Low score means results are variance, not edge. Be direct.]
+**HONESTY SCORE:** [Copy honesty_score from [BACKTEST METRICS] as N/100, or write N/A when it is absent. It is 100 × the two-sided p-value of the observed ROI against the expected return of the bets placed: N in 100 pure-chance runs of this size land at least this far from that return. A high score means nothing here but the house edge; a low score is a rare run, never an edge.]
 
 ## Critical Truth
 No betting system alters the mathematical house edge. A strategy with positive backtest results over finite samples is displaying variance, not edge. Your role is to:

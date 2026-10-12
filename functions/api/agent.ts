@@ -73,7 +73,7 @@ When analyzing strategies, always structure your response with these sections:
 **IMPACT**: What this means for the strategy
 **RECOMMENDATION**: Specific, actionable change
 **CONFIDENCE**: High / Medium / Low
-**HONESTY SCORE**: X/10 (10 = completely honest about house edge reality)
+**HONESTY SCORE**: Copy honesty_score from [BACKTEST METRICS] as N/100, or write N/A when it is absent. N in 100 pure-chance runs of this size land at least this far from the expected return of the bets placed: a high score means nothing here but the house edge; a low score is a rare run, never an edge.
 
 Be direct and honest. No betting system eliminates the house edge.
 Current strategy context: ${JSON.stringify(body.strategy ?? {})}
