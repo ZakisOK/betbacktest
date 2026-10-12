@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Loader2, Trash2, Settings, CheckCircle, Zap } from 'lucide-react'
 import { useStore } from '../../store/useStore'
 import type { AgentMessage } from '../../types'
+import { RARE_RUN_SCORE } from '../../agent/mathAgent'
 
 const QUICK_PROMPTS = [
   'What is the EV of this strategy?',
@@ -81,9 +82,9 @@ const Bubble: React.FC<{ msg: AgentMessage }> = ({ msg }) => {
             {msg.metadata?.honesty_score !== undefined && (
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded"
                 style={{
-                  background: msg.metadata.honesty_score > 60 ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)',
-                  color:      msg.metadata.honesty_score > 60 ? 'rgba(248,113,113,0.9)' : 'rgba(74,222,128,0.9)',
-                  border:     `1px solid ${msg.metadata.honesty_score > 60 ? 'rgba(239,68,68,0.2)' : 'rgba(34,197,94,0.2)'}`,
+                  background: msg.metadata.honesty_score < RARE_RUN_SCORE ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)',
+                  color:      msg.metadata.honesty_score < RARE_RUN_SCORE ? 'rgba(251,191,36,0.9)' : 'rgba(255,255,255,0.4)',
+                  border:     `1px solid ${msg.metadata.honesty_score < RARE_RUN_SCORE ? 'rgba(251,191,36,0.2)' : 'rgba(255,255,255,0.08)'}`,
                 }}>
                 Honesty {msg.metadata.honesty_score}/100
               </span>

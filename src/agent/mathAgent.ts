@@ -6,7 +6,7 @@
  */
 
 import axios from 'axios'
-import type { Strategy, BacktestResults, AgentMessage } from '../types'
+import type { Strategy, BacktestResults, AgentMessage, BetSide } from '../types'
 
 // ────────────────────────────────────────────────────────────
 // System Prompt
@@ -47,7 +47,7 @@ Structure EVERY response with these exact sections:
 
 **CONFIDENCE:** [0-100 score explaining statistical certainty of recommendation]
 
-**HONESTY SCORE:** [0-100. Formula: 100 × (1 - p-value from permutation test). Low score means results are variance, not edge. Be direct.]
+**HONESTY SCORE:** [Copy honesty_score from [BACKTEST METRICS] as N/100, or write N/A when it is absent. It is 100 × the two-sided p-value of the observed ROI against the expected return of the bets placed: N in 100 pure-chance runs of this size land at least this far from that return. A high score means nothing here but the house edge; a low score is a rare run, never an edge.]
 
 ## Critical Truth
 No betting system alters the mathematical house edge. A strategy with positive backtest results over finite samples is displaying variance, not edge. Your role is to:
@@ -67,8 +67,85 @@ interface LocalAnalysis {
   ev_player: number
   progression_bust_probability: number
   martingale_levels_to_bust: number
-  honesty_score: number
+  honesty: HonestyTest | null
   key_findings: string[]
+}
+
+// Exact 8-deck outcome probabilities: they give the glossary EVs of Banker
+// -1.06% (5% commission), Player -1.24% and Tie -14.36%.
+const P_BANKER = 0.4585974
+const P_PLAYER = 0.4462466
+const P_TIE = 0.095156
+
+// Below this many bets the normal approximation behind the score is too rough to report
+const MIN_BETS_FOR_SCORE = 100
+
+/** Honesty scores below this mark a run further from its expected return than chance usually allows */
+export const RARE_RUN_SCORE = 5
+
+interface HonestyTest {
+  bets: number
+  hands: number
+  /** Stake-weighted expected return of the bets actually placed */
+  expected_roi: number
+  /** Half-width of the ROI range 95% of pure-chance runs of this size land in */
+  margin: number
+  /** 100 × the two-sided p-value of the observed ROI; absent when there are too few bets */
+  score?: number
+}
+
+interface Moments {
+  ev: number
+  variance: number
+}
+
+// Return per unit staked for each outcome, as the simulator's computePnL pays it
+function sideMoments(side: BetSide, commission: number, tieHandling: 'push' | 'lose'): Moments {
+  const onTie = tieHandling === 'lose' ? -1 : 0
+  let outcomes: Array<[probability: number, payout: number]>
+  if (side === 'Banker') outcomes = [[P_BANKER, 1 - commission], [P_PLAYER, -1], [P_TIE, onTie]]
+  else if (side === 'Player') outcomes = [[P_PLAYER, 1], [P_BANKER, -1], [P_TIE, onTie]]
+  else outcomes = [[P_TIE, 8], [P_BANKER + P_PLAYER, -1]]
+  const ev = outcomes.reduce((s, [p, x]) => s + p * x, 0)
+  const variance = outcomes.reduce((s, [p, x]) => s + p * x * x, 0) - ev * ev
+  return { ev, variance }
+}
+
+// Rules and progressions decide which side is bet and how much, and many hands
+// carry no bet at all, so the expected return and its spread are built from
+// each bet placed rather than from the hand count and the Banker EV.
+function honestyTest(results: BacktestResults): HonestyTest {
+  const { commission_rate, tie_handling } = results.config
+  const moments: Record<BetSide, Moments> = {
+    Banker: sideMoments('Banker', commission_rate, tie_handling),
+    Player: sideMoments('Player', commission_rate, tie_handling),
+    Tie: sideMoments('Tie', commission_rate, tie_handling),
+  }
+
+  let bets = 0
+  let wagered = 0
+  let expectedPnl = 0
+  let pnlVariance = 0
+  for (const hand of results.shoes.flatMap((s) => s.hands)) {
+    if (hand.skipped || hand.bet_amount <= 0 || !hand.bet_side) continue
+    const { ev, variance } = moments[hand.bet_side]
+    bets++
+    wagered += hand.bet_amount
+    expectedPnl += hand.bet_amount * ev
+    pnlVariance += hand.bet_amount ** 2 * variance
+  }
+
+  const hands = results.metrics.total_hands
+  if (wagered === 0) return { bets, hands, expected_roi: 0, margin: 0 }
+
+  const expectedRoi = expectedPnl / wagered
+  const stdRoi = Math.sqrt(pnlVariance) / wagered
+  const test = { bets, hands, expected_roi: expectedRoi, margin: 1.96 * stdRoi }
+  if (bets < MIN_BETS_FOR_SCORE) return test
+
+  const zScore = Math.abs(results.metrics.roi - expectedRoi) / stdRoi
+  const pValue = 2 * (1 - normalCDF(zScore))
+  return { ...test, score: Math.max(0, Math.round(100 * pValue)) }
 }
 
 function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): LocalAnalysis {
@@ -92,21 +169,6 @@ function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): L
   // or a typical 8-deck shoe before any backtest has run
   const handsPerShoe = results?.shoes.length ? results.metrics.total_hands / results.shoes.length : 81
   const shoeBustRisk = 1 - Math.pow(1 - progBustProb, handsPerShoe)
-
-  // Honesty score: simple variance test
-  let honestyScore = 50
-  if (results) {
-    const m = results.metrics
-    const totalHands = m.total_hands
-    if (totalHands > 1000) {
-      // Approximate p-value: if ROI is more than 2 std devs from expected EV
-      const expectedROI = evBanker // dominant bet type assumed
-      const stdROI = Math.sqrt(0.5 / totalHands) // approximate
-      const zScore = Math.abs((m.roi - expectedROI) / stdROI)
-      const pValue = 2 * (1 - normalCDF(zScore))
-      honestyScore = Math.round(100 * (1 - pValue))
-    }
-  }
 
   // Key findings
   const findings: string[] = []
@@ -134,7 +196,7 @@ function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): L
     ev_player: evPlayer,
     progression_bust_probability: shoeBustRisk,
     martingale_levels_to_bust: bustAfterLosses,
-    honesty_score: honestyScore,
+    honesty: results ? honestyTest(results) : null,
     key_findings: findings,
   }
 }
@@ -160,10 +222,32 @@ function normalCDF(z: number): number {
 
 type Metrics = BacktestResults['metrics']
 
-function honestyNote(score: number): string {
-  if (score > 70) return 'High probability results reflect variance, not genuine edge.'
-  if (score > 40) return 'Moderate uncertainty — more simulation data needed to distinguish signal from noise.'
-  return 'Low sample size — results are statistically inconclusive.'
+function percent(x: number): string {
+  return `${(x * 100).toFixed(2)}%`
+}
+
+function honestyLine(test: HonestyTest): string {
+  const sample = `${test.bets.toLocaleString()} bets over ${test.hands.toLocaleString()} hands`
+  if (test.score === undefined) {
+    if (test.bets === 0) {
+      return `**HONESTY SCORE:** N/A — No bets were placed over ${test.hands.toLocaleString()} hands, so there is nothing to compare with the house edge.`
+    }
+    return `**HONESTY SCORE:** N/A — Only ${sample}, too few to compare with the house edge. Run more shoes.`
+  }
+
+  const expected = `the ${percent(test.expected_roi)} expected return of these bets`
+  let note: string
+  if (test.score < RARE_RUN_SCORE) {
+    const odds = test.score === 0 ? 'fewer than 1' : `only ${test.score}`
+    note = `A rare run, not an edge: ${odds} in 100 pure-chance runs of this size land this far from ${expected}. The expected value of every bet stays negative.`
+  } else {
+    note = `Nothing here but the house edge: ${test.score} in 100 pure-chance runs of this size land at least this far from ${expected}.`
+  }
+  // When chance alone swings the ROI further than the house edge itself, the run is too small to read
+  if (test.margin > Math.abs(test.expected_roi)) {
+    note += ` Small sample: at ${sample}, 95% of pure-chance runs land within ±${percent(test.margin)} of that return, a wider range than the house edge itself. Run more shoes before reading anything into the ROI.`
+  }
+  return `**HONESTY SCORE:** ${test.score}/100 — ${note}`
 }
 
 function findingLine(m: Metrics, results: BacktestResults): string {
@@ -218,7 +302,7 @@ function resultsAnalysis(m: Metrics, results: BacktestResults, analysis: LocalAn
 
   const confidence = Math.min(95, 60 + Math.floor(Math.log10(m.total_hands + 1) * 10))
   content += `\n**CONFIDENCE:** ${confidence}/100 — Based on ${m.total_hands.toLocaleString()} hands simulated.\n\n`
-  content += `**HONESTY SCORE:** ${analysis.honesty_score}/100 — ${honestyNote(analysis.honesty_score)}`
+  if (analysis.honesty) content += honestyLine(analysis.honesty)
   return content
 }
 
@@ -287,6 +371,8 @@ export async function sendAgentRequest(
     })),
   })
 
+  const analysis = builtInAnalysis(strategy, results)
+
   const metricsContext = results
     ? JSON.stringify({
         shoes: results.config.num_shoes,
@@ -303,6 +389,7 @@ export async function sendAgentRequest(
         total_hands: results.metrics.total_hands,
         banker_bets: results.metrics.banker_bet_count,
         player_bets: results.metrics.player_bet_count,
+        honesty_score: analysis.honesty?.score,
       })
     : 'No backtest run yet'
 
@@ -346,7 +433,6 @@ export async function sendAgentRequest(
     }
   } catch {
     // The API is unreachable or failed: fall back to the built-in analysis.
-    const analysis = builtInAnalysis(strategy, results)
     const content = formatLocalAnalysis(strategy, results, analysis, userMessage)
 
     return {
@@ -355,7 +441,7 @@ export async function sendAgentRequest(
       content,
       timestamp: new Date().toISOString(),
       metadata: {
-        honesty_score: analysis.honesty_score,
+        honesty_score: analysis.honesty?.score,
         confidence: 70,
       },
     }
