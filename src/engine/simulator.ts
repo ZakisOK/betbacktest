@@ -18,6 +18,7 @@ import type {
 } from "../types";
 import { type DealtHand, dealHand, generateShoe, mulberry32 } from "./baccarat";
 import { calculateMetrics } from "./metrics";
+import { settleBet } from "./tableRules";
 
 // ────────────────────────────────────────────────────────────
 // Simulation State
@@ -45,7 +46,6 @@ interface SimState {
   skip_remaining: number;
   stopped: boolean;
   progression: ProgressionState;
-  commission_rate: number;
 }
 
 function initState(strategy: Strategy, config: SimulationConfig): SimState {
@@ -69,7 +69,6 @@ function initState(strategy: Strategy, config: SimulationConfig): SimState {
       oscars: { profit: 0, base: 1 },
       sequenceStep: 0,
     },
-    commission_rate: config.commission_rate,
   };
 }
 
@@ -366,37 +365,6 @@ function evaluateStrategy(state: SimState, rules: Rule[]): BetDecision {
 }
 
 // ────────────────────────────────────────────────────────────
-// Compute Hand P&L
-// ────────────────────────────────────────────────────────────
-
-function computePnL(
-  decision: BetDecision,
-  outcome: "Banker" | "Player" | "Tie",
-  commissionRate: number,
-  tieHandling: "push" | "lose"
-): number {
-  if (!decision.side || decision.amount <= 0) return 0;
-
-  const { side, amount } = decision;
-
-  if (side === outcome) {
-    // Win
-    const commission = side === "Banker" ? commissionRate : 0;
-    if (side === "Tie") {
-      return amount * 8; // Tie pays 8:1
-    }
-    return amount * (1 - commission);
-  }
-
-  if (outcome === "Tie") {
-    if (tieHandling === "push") return 0; // push (no win/loss)
-    return -amount; // treated as loss
-  }
-
-  return -amount; // Loss
-}
-
-// ────────────────────────────────────────────────────────────
 // Update State After Hand
 // ────────────────────────────────────────────────────────────
 
@@ -510,7 +478,16 @@ function simulateShoe(
     }
 
     const outcome = dealt.outcome;
-    const pnl = computePnL(decision, outcome, config.commission_rate, config.tie_handling);
+    const pnl =
+      decision.side && decision.amount > 0
+        ? settleBet(
+            decision.side,
+            decision.amount,
+            { outcome, bankerValue: dealt.bankerValue, bankerCardCount: dealt.bankerCards.length },
+            config.table_rules,
+            config.tie_handling
+          )
+        : 0;
 
     const outCode = outcome === "Banker" ? "B" : outcome === "Player" ? "P" : "T";
     sequence.push(outCode);

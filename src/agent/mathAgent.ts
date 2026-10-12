@@ -6,7 +6,8 @@
  */
 
 import axios from 'axios'
-import type { Strategy, BacktestResults, AgentMessage } from '../types'
+import type { Strategy, BacktestResults, AgentMessage, TableRules } from '../types'
+import { TABLE_RULES, expectedValue } from '../engine/tableRules'
 
 // ────────────────────────────────────────────────────────────
 // System Prompt
@@ -18,6 +19,7 @@ const SYSTEM_PROMPT = `You are an expert Baccarat mathematics agent — a specia
 - Banker win: 45.86% | EV with 5% commission: -1.06% per unit
 - Player win: 44.62% | EV: -1.24% per unit
 - Tie: 9.52% | EV with 8:1 payout: -14.36% per unit
+- Other real table rules change only the Banker bet: 4% commission -0.60%, EZ Baccarat (Banker three-card 7 pushes) -1.02%, Super 6 (Banker 6 pays 1:2) -1.46%. Every Banker EV stays negative.
 
 ## Your Mandate
 For any strategy submitted, you:
@@ -63,6 +65,7 @@ Be mathematically precise. Never provide vague qualitative advice — always inc
 // ────────────────────────────────────────────────────────────
 
 interface LocalAnalysis {
+  table_rules: TableRules
   ev_banker: number
   ev_player: number
   progression_bust_probability: number
@@ -72,14 +75,12 @@ interface LocalAnalysis {
 }
 
 function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): LocalAnalysis {
-  const commission = results?.config.commission_rate ?? 0.05
+  const tableRules = results?.config.table_rules ?? 'commission_5'
+  const deckCount = results?.config.deck_count ?? 8
 
-  // EV calculations
-  const pBanker = 0.4586
+  const evBanker = expectedValue('Banker', tableRules, deckCount)
+  const evPlayer = expectedValue('Player', tableRules, deckCount)
   const pPlayer = 0.4462
-  const pTie = 0.0952
-  const evBanker = pBanker * (1 - commission) - pPlayer - pTie * 0
-  const evPlayer = pPlayer - pBanker - pTie * 0
 
   // Martingale analysis
   const base = strategy.base_unit
@@ -129,6 +130,7 @@ function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): L
   }
 
   return {
+    table_rules: tableRules,
     ev_banker: evBanker,
     ev_player: evPlayer,
     progression_bust_probability: shoeBustRisk,
@@ -175,7 +177,7 @@ function formatLocalAnalysis(
     }\n\n`
 
     content += `**MATH:**\n`
-    content += `• Banker EV (${((results?.config.commission_rate ?? 0.05) * 100).toFixed(0)}% commission): ${(analysis.ev_banker * 100).toFixed(4)}% per unit\n`
+    content += `• Banker EV (${TABLE_RULES[analysis.table_rules].label} rules): ${(analysis.ev_banker * 100).toFixed(4)}% per unit\n`
     content += `• Player EV: ${(analysis.ev_player * 100).toFixed(4)}% per unit\n`
     content += `• Observed ROI: ${(m.roi * 100).toFixed(4)}%\n`
     content += `• Deviation from theoretical: ${((m.roi - analysis.ev_banker) * 100).toFixed(4)}% (${m.roi > analysis.ev_banker ? 'above' : 'below'} expected)\n`
@@ -207,7 +209,7 @@ function formatLocalAnalysis(
         content += `• Consider flat betting to reduce variance while maintaining similar EV\n`
       }
     } else {
-      content += `**RECOMMENDATION:** Strategy parameters appear conservative. Consider tightening stop-loss triggers and exploring lower commission variants (EZ Baccarat at 0%) to improve effective EV.\n`
+      content += `**RECOMMENDATION:** Strategy parameters appear conservative. Tightening stop-loss triggers limits drawdown, but no table rules or parameter change make the expected value of any bet positive.\n`
     }
 
     content += `\n**CONFIDENCE:** ${Math.min(95, 60 + Math.floor(Math.log10(m.total_hands + 1) * 10))}/100 — Based on ${m.total_hands.toLocaleString()} hands simulated.\n\n`
@@ -270,6 +272,7 @@ export async function sendAgentRequest(
   const metricsContext = results
     ? JSON.stringify({
         shoes: results.config.num_shoes,
+        table_rules: results.config.table_rules,
         net_pnl: results.metrics.net_pnl,
         roi: results.metrics.roi,
         win_rate: results.metrics.win_rate,

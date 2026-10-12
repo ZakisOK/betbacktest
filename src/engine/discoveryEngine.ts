@@ -154,7 +154,7 @@ export async function runDiscovery(cfg: DiscoveryConfig): Promise<DiscoveryCandi
     num_shoes: cfg.numShoes,
     hands_per_shoe: 80,
     deck_count: 8,
-    commission_rate: 0.05,
+    table_rules: 'commission_5',
     shuffle_type: 'imperfect',
     cut_card_position: 14,
     tie_handling: 'push',

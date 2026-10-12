@@ -86,7 +86,6 @@ export interface Modifiers {
   max_bet?: number
   bankroll_guard?: number
   time_decay?: number
-  commission_override?: number
   shoe_reset?: 'carry' | 'reset'
 }
 
@@ -115,11 +114,18 @@ export interface Strategy {
 // Simulation Configuration
 // ────────────────────────────────────────────────────────────
 
+/**
+ * Banker payout rules of a real casino table. A free commission rate is not
+ * offered: any commission below about 2.69% hands the Banker bet a positive EV
+ * unless another rule takes it back, as EZ Baccarat and Super 6 do.
+ */
+export type TableRules = 'commission_5' | 'commission_4' | 'ez_baccarat' | 'super_6'
+
 export interface SimulationConfig {
   num_shoes: number
   hands_per_shoe: number
   deck_count: 6 | 8
-  commission_rate: number
+  table_rules: TableRules
   shuffle_type: 'perfect' | 'imperfect'
   cut_card_position: number
   tie_handling: 'push' | 'lose'
