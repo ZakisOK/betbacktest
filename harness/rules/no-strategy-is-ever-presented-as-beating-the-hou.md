@@ -11,7 +11,7 @@ in `harness/docs/glossary.md` (Banker -1.06%, Player -1.24%, Tie -14.36%) are
 fixed and appear unchanged wherever they are shown. The Banker figure is for
 standard 5% commission; the other table rules in the glossary have their own
 fixed Banker EV, every one negative, and no setting may offer a ruleset whose
-Banker EV is zero or positive (`src/engine/engine.test.ts` checks this).
+Banker EV is zero or positive (`src/engine/tableRules.test.ts` checks this).
 
 Not machine-checkable: disclaimers legitimately use the same words. Reviewers
 check every change to UI copy, `src/agent/`, `functions/api/agent.ts` and

@@ -1,6 +1,7 @@
 # Domain glossary
 
 - **Shoe**: the stack of 6 or 8 shuffled decks hands are dealt from (`generateShoe`).
+- **Cut card**: a marker placed `cut_card_position` cards from the end of the shoe. No new hand starts once it is reached, so an 8-deck shoe with a 14-card cut deals about 81 hands and a 6-deck shoe about 60.
 - **Hand**: one Banker-versus-Player deal, resolved with the standard third-card rules (`dealHand`, `playerDraws`, `bankerDraws`).
 - **Natural**: a two-card total of 8 or 9; the hand ends immediately.
 - **Outcome**: `Banker`, `Player` or `Tie`.
@@ -10,13 +11,13 @@
 - **Backtest**: running a strategy over many simulated shoes and measuring the result.
 - **EV (expected value)**: the long-run return per unit bet. These are fixed facts of the game and the app must never claim a strategy changes them:
 
-| Bet | EV per unit |
-|---|---|
-| Banker | -1.06% (standard 5% commission) |
-| Player | -1.24% |
-| Tie | -14.36% |
+| Bet | Probability (8 decks) | EV per unit |
+|---|---|---|
+| Banker | 45.86% | -1.06% (standard 5% commission) |
+| Player | 44.62% | -1.24% |
+| Tie | 9.52% | -14.36% |
 
-- **Table rules**: how a winning Banker bet is paid (`table_rules`, `src/engine/tableRules.ts`). Only rulesets real tables deal are offered, because a bare commission below about 2.69% would give Banker a positive EV. Player and Tie are the same under every ruleset. `src/engine/engine.test.ts` pins each Banker EV below zero.
+- **Table rules**: how a winning Banker bet is paid (`table_rules`, `src/engine/tableRules.ts`). Only rulesets real tables deal are offered, because a bare commission below about 2.69% would give Banker a positive EV. Player and Tie are the same under every ruleset. `src/engine/tableRules.test.ts` pins each Banker EV below zero.
 
 | Table rules | Banker rule | Banker EV (8 decks) |
 |---|---|---|

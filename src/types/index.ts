@@ -123,10 +123,8 @@ export type TableRules = 'commission_5' | 'commission_4' | 'ez_baccarat' | 'supe
 
 export interface SimulationConfig {
   num_shoes: number
-  hands_per_shoe: number
   deck_count: 6 | 8
   table_rules: TableRules
-  shuffle_type: 'perfect' | 'imperfect'
   cut_card_position: number
   tie_handling: 'push' | 'lose'
   starting_bankroll: number

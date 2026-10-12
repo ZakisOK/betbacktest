@@ -42,7 +42,7 @@ export const SimConfig: React.FC<Props> = ({ config, onChange }) => {
         <div className="flex gap-1 mb-1">
           {[100, 1000, 10000, 100000].map(v => (
             <button key={v} onClick={() => onChange({ num_shoes: v })}
-              className="text-[9px] px-1.5 py-0.5 rounded font-mono transition-all"
+              className="text-[9px] px-1.5 py-0.5 rounded-sm font-mono transition-all"
               style={config.num_shoes === v
                 ? { background:'linear-gradient(135deg,rgba(59,130,246,0.6),rgba(99,102,241,0.6))', color:'white', border:'1px solid rgba(99,102,241,0.4)' }
                 : { background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.4)', border:'1px solid rgba(255,255,255,0.08)' }}>
@@ -52,7 +52,6 @@ export const SimConfig: React.FC<Props> = ({ config, onChange }) => {
         </div>
       </div>
 
-      <SliderField label="Hands / Shoe"      value={config.hands_per_shoe}   min={40}  max={85}   onChange={v => onChange({ hands_per_shoe: v })}/>
       <div className="mb-3">
         <div className="section-label mb-1">Table Rules</div>
         <select value={config.table_rules} onChange={e => onChange({ table_rules: e.target.value as TableRules })}

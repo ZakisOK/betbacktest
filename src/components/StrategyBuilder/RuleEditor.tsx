@@ -162,12 +162,12 @@ export const RuleEditor: React.FC<Props> = ({ rule, onSave, onClose }) => {
               </Sel></F>
               <F label="Threshold ($)"><Inp type="number" value={trigger.threshold??-500} onChange={e => uT({ threshold: +e.target.value })}/></F>
             </>}
-            {trigger.type === 'hand_count' && <>
+            {trigger.type === 'hand_count' && (
               <div className="grid grid-cols-2 gap-2">
                 <F label="Hand Min"><Inp type="number" min={0} value={trigger.hand_min??1} onChange={e => uT({ hand_min: +e.target.value })}/></F>
                 <F label="Hand Max"><Inp type="number" min={0} value={trigger.hand_max??''} placeholder="∞" onChange={e => uT({ hand_max: e.target.value ? +e.target.value : undefined })}/></F>
               </div>
-            </>}
+            )}
             {trigger.type === 'composite' && <>
               <F label="Logic Operator">
                 <div className="flex gap-2">
@@ -217,14 +217,14 @@ export const RuleEditor: React.FC<Props> = ({ rule, onSave, onClose }) => {
                 <option value="take_profit">Take Profit</option>
               </Sel>
             </F>
-            {action.type === 'place_bet' && <>
+            {action.type === 'place_bet' && (
               <div className="grid grid-cols-2 gap-2">
                 <F label="Bet Side"><Sel value={action.side??'Banker'} onChange={e => uA({ side: e.target.value as BetSide })}>
                   <option value="Banker">Banker</option><option value="Player">Player</option><option value="Tie">Tie</option>
                 </Sel></F>
                 <F label="Unit ×"><Inp type="number" min={0.1} step={0.1} value={action.unit_size??1} onChange={e => uA({ unit_size: +e.target.value })}/></F>
               </div>
-            </>}
+            )}
             {action.type === 'adjust_unit' && <>
               <F label="Progression — choose a betting system">
                 <div className="grid grid-cols-1 gap-1.5">

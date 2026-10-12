@@ -18,14 +18,14 @@ const FEATURES = [
 
 const HIGHLIGHTS = [
   { icon: <Layers size={20} />, title: 'Build any strategy', body: 'Rule-based engine with 20+ trigger types and progression methods including Martingale, Fibonacci, Labouchere, and Oscar\'s Grind.' },
-  { icon: <TrendingUp size={20} />, title: 'Run millions of shoes', body: 'Simulate up to 1,000,000 shoes with Lab tier. Full 8-deck baccarat under standard, 4% commission, EZ Baccarat and Super 6 table rules, with configurable cut card and shuffle.' },
+  { icon: <TrendingUp size={20} />, title: 'Run millions of shoes', body: 'Simulate up to 1,000,000 shoes with Lab tier. Full 6- or 8-deck baccarat under standard, 4% commission, EZ Baccarat and Super 6 table rules, with configurable cut card and tie handling.' },
   { icon: <Bot size={20} />, title: 'AI tells you the truth', body: 'Every analysis includes an Honesty Score. No betting system eliminates the house edge — the AI won\'t pretend otherwise.' },
   { icon: <BarChart3 size={20} />, title: 'Full risk metrics', body: 'Sharpe ratio, Sortino, Value at Risk, Kelly Criterion, Risk of Ruin, max drawdown, and 25+ more performance metrics.' },
   { icon: <Zap size={20} />, title: 'Real-time in the browser', body: 'No server-side simulation. All computation runs locally in your browser. Your strategy data stays private.' },
   { icon: <Shield size={20} />, title: 'Honest about the math', body: 'Banker EV = −1.06%. Player EV = −1.24%. Tie EV = −14.36%. Simulations confirm theory. We show you the real numbers.' },
 ]
 
-const TIER_CHECK = ({ val }: { val: boolean | string }) => {
+const TierCheck = ({ val }: { val: boolean | string }) => {
   if (val === false) return <Lock size={14} className="text-white/20 mx-auto" />
   if (val === true) return <span className="text-emerald-400 font-bold">✓</span>
   return <span className="text-white/70 text-sm">{val}</span>
@@ -57,7 +57,7 @@ export const LandingPage: React.FC = () => {
           >
             🎴
           </div>
-          <span className="text-sm font-bold bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="text-sm font-bold bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             BetBacktest
           </span>
         </div>
@@ -85,7 +85,7 @@ export const LandingPage: React.FC = () => {
         </div>
         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-4">
           Backtest Betting Strategies<br />
-          <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-blue-400 to-violet-400 bg-clip-text text-transparent">
             with AI
           </span>
         </h1>
@@ -213,9 +213,9 @@ export const LandingPage: React.FC = () => {
               {FEATURES.map((f, i) => (
                 <tr key={f.name} style={{ borderBottom: i < FEATURES.length - 1 ? '1px solid rgba(255,255,255,0.04)' : undefined }}>
                   <td className="p-4 text-white/60">{f.name}</td>
-                  <td className="p-4 text-center"><TIER_CHECK val={f.free} /></td>
-                  <td className="p-4 text-center"><TIER_CHECK val={f.pro} /></td>
-                  <td className="p-4 text-center"><TIER_CHECK val={f.lab} /></td>
+                  <td className="p-4 text-center"><TierCheck val={f.free} /></td>
+                  <td className="p-4 text-center"><TierCheck val={f.pro} /></td>
+                  <td className="p-4 text-center"><TierCheck val={f.lab} /></td>
                 </tr>
               ))}
             </tbody>

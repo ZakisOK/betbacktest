@@ -32,6 +32,9 @@ jobs:
       - name: TypeScript type check
         run: node_modules/.bin/tsc --noEmit
 
+      - name: Engine tests
+        run: node_modules/.bin/vitest run
+
       - name: Build
         run: npm run build
 

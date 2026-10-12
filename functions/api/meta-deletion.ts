@@ -18,7 +18,7 @@ async function parseSignedRequest(
       ["sign"]
     );
     const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(payload));
-    const expectedSig = btoa(String.fromCharCode(...new Uint8Array(sig)))
+    const expectedSig = btoa(String.fromCodePoint(...new Uint8Array(sig)))
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=/g, "");
@@ -56,7 +56,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   });
 };
 
-export const onRequest: PagesFunction<Env> = async (context) => {
+export const onRequest: PagesFunction<Env> = (context) => {
   if (context.request.method !== "POST") return new Response("Method not allowed", { status: 405 });
   return onRequestPost(context);
 };

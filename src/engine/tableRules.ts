@@ -2,7 +2,7 @@
  * Table Rules — how a winning Banker bet is paid, and the exact EV of each bet
  *
  * Every ruleset here is one a real table deals, and every one keeps the house
- * edge. src/engine/engine.test.ts pins each Banker EV below zero.
+ * edge. src/engine/tableRules.test.ts pins each Banker EV below zero.
  */
 
 import type { BetSide, HandOutcome, TableRules } from "../types";

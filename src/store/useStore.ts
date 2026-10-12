@@ -41,10 +41,8 @@ const DEFAULT_STRATEGY: Strategy = {
 
 const DEFAULT_SIM_CONFIG: SimulationConfig = {
   num_shoes: 1000,
-  hands_per_shoe: 70,
   deck_count: 8,
   table_rules: "commission_5",
-  shuffle_type: "perfect",
   cut_card_position: 14,
   tie_handling: "push",
   starting_bankroll: 5000,
