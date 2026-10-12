@@ -4,38 +4,37 @@ exports[`sendAgentRequest offline fallback > analyses a large run 1`] = `
 {
   "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
 
-**FINDING:** Strategy shows net negative P&L of $28.50 — consistent with the theoretical house edge.
+**FINDING:** Strategy shows net negative P&L of $198.00 — consistent with the theoretical house edge.
 
 **MATH:**
 • Banker EV (5% commission): -1.0530% per unit
 • Player EV: -1.2400% per unit
-• Observed ROI: -6.7857%
-• Deviation from theoretical: -5.7327% (below expected)
+• Observed ROI: -1.2306%
+• Deviation from theoretical: -0.1776% (below expected)
 • Progression bust threshold: 11 consecutive losses
 • Per-shoe bust probability: 1.111%
 
 **IMPACT:**
-• Win Rate: 40.48% | Max Drawdown: $74.50
-• Sharpe Ratio: -0.454 | Sortino: -0.581
+• Win Rate: 45.74% | Max Drawdown: $322.00
+• Sharpe Ratio: -0.689 | Sortino: -0.875
 • Risk of Ruin: 100.000% | Kelly: 0.00%
-• VaR (95%): $-20.00 per shoe
+• VaR (95%): $-86.50 per shoe
 
 **RECOMMENDATION:**
 ⚠ Risk of ruin 100.00% exceeds 5% threshold
-⚠ Negative Sharpe ratio (-0.454) indicates returns below risk-free rate
-⚠ Profit factor 0.850 < 1.0 — system is net-negative
-⚠ Win rate 40.48% below Banker probability baseline
+⚠ Negative Sharpe ratio (-0.689) indicates returns below risk-free rate
+⚠ Profit factor 0.972 < 1.0 — system is net-negative
 
 Suggested improvements:
 • Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
 • Consider flat betting to reduce variance while maintaining similar EV
 
-**CONFIDENCE:** 77/100 — Based on 62 hands simulated.
+**CONFIDENCE:** 92/100 — Based on 1,629 hands simulated.
 
-**HONESTY SCORE:** 50/100 — Moderate uncertainty — more simulation data needed to distinguish signal from noise.",
+**HONESTY SCORE:** 8/100 — Low sample size — results are statistically inconclusive.",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 50,
+    "honesty_score": 8,
   },
   "role": "assistant",
 }
@@ -45,35 +44,37 @@ exports[`sendAgentRequest offline fallback > analyses a losing run, martingale q
 {
   "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
 
-**FINDING:** Strategy shows net negative P&L of $150.00 — consistent with the theoretical house edge.
+**FINDING:** Strategy shows net negative P&L of $5060.00 — consistent with the theoretical house edge.
 
 **MATH:**
 • Banker EV (5% commission): -1.0530% per unit
 • Player EV: -1.2400% per unit
-• Observed ROI: -7.6923%
-• Deviation from theoretical: -6.6393% (below expected)
+• Observed ROI: -11.5393%
+• Deviation from theoretical: -10.4863% (below expected)
 • Progression bust threshold: 11 consecutive losses
 • Per-shoe bust probability: 1.111%
 
 **IMPACT:**
-• Win Rate: 10.26% | Max Drawdown: $380.00
-• Sharpe Ratio: -0.396 | Sortino: -0.670
+• Win Rate: 9.83% | Max Drawdown: $4960.00
+• Sharpe Ratio: -2.690 | Sortino: -2.541
 • Risk of Ruin: 100.000% | Kelly: 0.00%
-• VaR (95%): $-40.00 per shoe
+• VaR (95%): $-450.00 per shoe
 
 **RECOMMENDATION:**
 ⚠ Risk of ruin 100.00% exceeds 5% threshold
-⚠ Negative Sharpe ratio (-0.396) indicates returns below risk-free rate
-⚠ Profit factor 0.914 < 1.0 — system is net-negative
-⚠ Win rate 10.26% below Banker probability baseline
+⚠ Max drawdown 4960 exceeds 30% of starting bankroll
+⚠ Negative Sharpe ratio (-2.690) indicates returns below risk-free rate
+⚠ Profit factor 0.872 < 1.0 — system is net-negative
+⚠ Win rate 9.83% below Banker probability baseline
 
 Suggested improvements:
 • Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
+• Lower stop-loss threshold to limit drawdown exposure
 • Consider flat betting to reduce variance while maintaining similar EV
 
-**CONFIDENCE:** 82/100 — Based on 195 hands simulated.
+**CONFIDENCE:** 95/100 — Based on 4,385 hands simulated.
 
-**HONESTY SCORE:** 50/100 — Moderate uncertainty — more simulation data needed to distinguish signal from noise.
+**HONESTY SCORE:** 100/100 — High probability results reflect variance, not genuine edge.
 
 ---
 *Martingale Analysis for tie:*
@@ -83,7 +84,7 @@ Total exposure at bust: $5110
 Probability of hitting bust sequence per shoe: 10.423%",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 50,
+    "honesty_score": 100,
   },
   "role": "assistant",
 }
@@ -93,34 +94,33 @@ exports[`sendAgentRequest offline fallback > analyses a small run, martingale qu
 {
   "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
 
-**FINDING:** Strategy shows net negative P&L of $410.50 — consistent with the theoretical house edge.
+**FINDING:** Strategy shows net positive P&L of $3978.50 over 30 shoes, but this likely reflects variance rather than structural edge.
 
 **MATH:**
 • Banker EV (5% commission): -1.0530% per unit
 • Player EV: -1.2400% per unit
-• Observed ROI: -14.2535%
-• Deviation from theoretical: -13.2005% (below expected)
+• Observed ROI: 4.4142%
+• Deviation from theoretical: 5.4672% (above expected)
 • Progression bust threshold: 11 consecutive losses
 • Per-shoe bust probability: 1.111%
 
 **IMPACT:**
-• Win Rate: 45.45% | Max Drawdown: $1270.00
-• Sharpe Ratio: -0.179 | Sortino: -0.225
+• Win Rate: 46.33% | Max Drawdown: $2271.00
+• Sharpe Ratio: 1.587 | Sortino: 1.890
 • Risk of Ruin: 100.000% | Kelly: 0.00%
-• VaR (95%): $-240.00 per shoe
+• VaR (95%): $-998.00 per shoe
 
 **RECOMMENDATION:**
 ⚠ Risk of ruin 100.00% exceeds 5% threshold
-⚠ Negative Sharpe ratio (-0.179) indicates returns below risk-free rate
-⚠ Profit factor 0.737 < 1.0 — system is net-negative
+⚠ Max drawdown 2271 exceeds 30% of starting bankroll
 
 Suggested improvements:
 • Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
-• Consider flat betting to reduce variance while maintaining similar EV
+• Lower stop-loss threshold to limit drawdown exposure
 
-**CONFIDENCE:** 79/100 — Based on 96 hands simulated.
+**CONFIDENCE:** 93/100 — Based on 2,452 hands simulated.
 
-**HONESTY SCORE:** 50/100 — Moderate uncertainty — more simulation data needed to distinguish signal from noise.
+**HONESTY SCORE:** 100/100 — High probability results reflect variance, not genuine edge.
 
 ---
 *Martingale Analysis for capped:*
@@ -130,7 +130,7 @@ Total exposure at bust: $5110
 Probability of hitting bust sequence per shoe: 10.423%",
   "metadata": {
     "confidence": 70,
-    "honesty_score": 50,
+    "honesty_score": 100,
   },
   "role": "assistant",
 }

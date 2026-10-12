@@ -61,6 +61,45 @@ describe('shoe and hand dealing', () => {
   })
 })
 
+// 8-deck outcome probabilities, from harness/docs/glossary.md.
+const odds = { Banker: 45.86, Player: 44.62, Tie: 9.52 }
+
+describe('dealing to the cut card', () => {
+  // A hand uses about 4.94 cards, so the 401 cards in front of a 14-card cut
+  // in 8 decks give about 81 hands, and the 297 in 6 decks about 60.
+  it.each([
+    [8, [80, 83], [72, 92]],
+    [6, [59, 62], [52, 70]],
+  ] as const)('deals a full %i-deck shoe', async (decks, [avgMin, avgMax], [shoeMin, shoeMax]) => {
+    const r = await runSimulation(strategy('watch', []), config({ deck_count: decks, num_shoes: 500, random_seed: 3 }), () => {})
+    const perShoe = r.shoes.map(s => s.hands_played)
+    const avg = r.metrics.total_hands / perShoe.length
+    expect(avg).toBeGreaterThanOrEqual(avgMin)
+    expect(avg).toBeLessThanOrEqual(avgMax)
+    expect(Math.min(...perShoe)).toBeGreaterThanOrEqual(shoeMin)
+    expect(Math.max(...perShoe)).toBeLessThanOrEqual(shoeMax)
+  })
+
+  it('matches the Banker, Player and Tie probabilities over many shoes', async () => {
+    const r = await runSimulation(strategy('watch', []), config({ num_shoes: 2000, random_seed: 11 }), () => {})
+    const hands = r.shoes.flatMap(s => s.hands)
+    const pct = (outcome: keyof typeof odds) => (100 * hands.filter(h => h.outcome === outcome).length) / hands.length
+    // About 163,000 hands puts one standard error near 0.12 points (0.07 for
+    // Tie), so these bounds sit about four standard errors out.
+    expect(Math.abs(pct('Banker') - odds.Banker)).toBeLessThan(0.5)
+    expect(Math.abs(pct('Player') - odds.Player)).toBeLessThan(0.5)
+    expect(Math.abs(pct('Tie') - odds.Tie)).toBeLessThan(0.3)
+  })
+
+  // Streak counters reset every shoe, so a shoe cut short never reaches long streaks.
+  it('fires a four-win streak trigger', async () => {
+    const fourBankers: Trigger = { type: 'streak', side: 'Banker', direction: 'consecutive_wins', min_length: 4 }
+    const s = strategy('after 4 Bankers', [rule('after 4 Bankers', fourBankers, { type: 'place_bet', side: 'Banker', unit_size: 1 })])
+    const r = await runSimulation(s, config({ num_shoes: 200, random_seed: 7 }), () => {})
+    expect(r.shoes.flatMap(sh => sh.hands).some(h => !h.skipped)).toBe(true)
+  })
+})
+
 const triggers: Record<string, Trigger> = {
   'streak banker wins 2': { type: 'streak', side: 'Banker', direction: 'consecutive_wins', min_length: 2 },
   'streak player wins 3': { type: 'streak', side: 'Player', direction: 'consecutive_wins', min_length: 3 },

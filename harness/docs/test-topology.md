@@ -19,7 +19,8 @@ SonarCloud and CodeRabbit also review every pull request through their GitHub ap
 Vitest characterization tests sit beside the code they pin:
 
 - `src/engine/engine.test.ts`: the seeded PRNG, shoe and hand dealing,
-  `runSimulation` across every trigger, action and progression, metrics,
+  hands dealt per shoe up to the cut card, outcome probabilities against
+  the glossary, `runSimulation` across every trigger, action and progression, metrics,
   pattern analysis, discovery and the auto optimizer (the agent is mocked).
 - `src/utils/rules.test.ts`: `parseNLRule` over about 90 sentences (axios is
   mocked, so the AI fallback is offline) and `ruleToSentence`.
@@ -33,7 +34,7 @@ review the diff before running `vitest run -u`.
 ## Gaps
 
 - No component tests; UI changes are checked in the browser.
-- No tests yet anchor the EV figures in `glossary.md` or the hands dealt per shoe.
+- No test yet anchors the EV figures in `glossary.md`; the outcome probabilities and hands per shoe are.
 - Biome, ESLint and Knip are configured but not enforced: the code does not pass them yet.
 
 ## Harness checks (Z.Code)
