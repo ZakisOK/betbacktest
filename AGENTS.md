@@ -11,14 +11,14 @@ Read by every coding agent (Claude Code, Codex, Kiro and any AGENTS.md reader). 
 
 - language: TypeScript (strict)
 - build: npm; `npm run build` runs `tsc` then `vite build`
-- tests: none yet; `tsc --noEmit` and the build are the trusted checks
+- tests: Vitest snapshot tests (`npm test`) pin the engine, rule parser and agent output; with `tsc --noEmit` and the build, they are the trusted checks
 - entry points: `src/App.tsx` (routes), `src/engine/simulator.ts` (backtest core), `functions/api/agent.ts` (Claude proxy)
 
 ## Commands
 
 - `npm ci` then `npm run dev`: app on http://localhost:5173
 - `node server.js`: local Claude proxy on port 3001 (needs `ANTHROPIC_API_KEY` in `.env`)
-- `node_modules/.bin/tsc --noEmit` and `npm run build`: what CI runs
+- `node_modules/.bin/tsc --noEmit`, `npm test` and `npm run build`: what CI runs
 
 ## Where things live
 

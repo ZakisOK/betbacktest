@@ -2,6 +2,13 @@ import { useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { useStore } from "../store/useStore";
 
+async function updateLastSignIn(userId: string) {
+  await supabase
+    .from("profiles")
+    .update({ last_sign_in: new Date().toISOString() })
+    .eq("id", userId);
+}
+
 export function useAuth() {
   const { setUser, setSession, setAuthLoading } = useStore();
 
@@ -109,13 +116,6 @@ export function useAuth() {
         lemon_subscription_id: null,
       });
     }
-  }
-
-  async function updateLastSignIn(userId: string) {
-    await supabase
-      .from("profiles")
-      .update({ last_sign_in: new Date().toISOString() })
-      .eq("id", userId);
   }
 
   function migrateLocalStorage() {

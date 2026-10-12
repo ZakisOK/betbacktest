@@ -84,7 +84,7 @@ function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): L
   // Martingale analysis
   const base = strategy.base_unit
   const maxBet = Math.max(...strategy.rules.map((r) => r.modifiers.max_bet ?? Infinity))
-  const maxLevels = isFinite(maxBet) ? Math.floor(Math.log2(maxBet / base)) : 10
+  const maxLevels = Number.isFinite(maxBet) ? Math.floor(Math.log2(maxBet / base)) : 10
   const bustAfterLosses = maxLevels + 1
   const progBustProb = Math.pow(pPlayer, bustAfterLosses)
 
@@ -157,87 +157,106 @@ function normalCDF(z: number): number {
 // Format Local Analysis as Structured Response
 // ────────────────────────────────────────────────────────────
 
+type Metrics = BacktestResults['metrics']
+
+function honestyNote(score: number): string {
+  if (score > 70) return 'High probability results reflect variance, not genuine edge.'
+  if (score > 40) return 'Moderate uncertainty — more simulation data needed to distinguish signal from noise.'
+  return 'Low sample size — results are statistically inconclusive.'
+}
+
+function findingLine(m: Metrics, results: BacktestResults): string {
+  if (m.net_pnl >= 0) {
+    return `Strategy shows net positive P&L of $${m.net_pnl.toFixed(2)} over ${results.config.num_shoes.toLocaleString()} shoes, but this likely reflects variance rather than structural edge.`
+  }
+  return `Strategy shows net negative P&L of $${Math.abs(m.net_pnl).toFixed(2)} — consistent with the theoretical house edge.`
+}
+
+function recommendationSection(m: Metrics, results: BacktestResults, analysis: LocalAnalysis): string {
+  if (analysis.key_findings.length === 0) {
+    return `**RECOMMENDATION:** Strategy parameters appear conservative. Consider tightening stop-loss triggers and exploring lower commission variants (EZ Baccarat at 0%) to improve effective EV.\n`
+  }
+  let content = `**RECOMMENDATION:**\n`
+  for (const f of analysis.key_findings) content += `⚠ ${f}\n`
+  content += `\nSuggested improvements:\n`
+  if (m.risk_of_ruin > 0.05) {
+    content += `• Reduce base unit or add stricter bankroll guard (current guard: check modifiers)\n`
+  }
+  if (m.max_drawdown > results.config.starting_bankroll * 0.3) {
+    content += `• Lower stop-loss threshold to limit drawdown exposure\n`
+  }
+  if (m.sharpe_ratio < 0.5) {
+    content += `• Consider flat betting to reduce variance while maintaining similar EV\n`
+  }
+  return content
+}
+
+function resultsAnalysis(m: Metrics, results: BacktestResults, analysis: LocalAnalysis): string {
+  const commissionPct = (results.config.commission_rate * 100).toFixed(0)
+  const direction = m.roi > analysis.ev_banker ? 'above' : 'below'
+  let content = `**FINDING:** ${findingLine(m, results)}\n\n`
+
+  content += `**MATH:**\n`
+  content += `• Banker EV (${commissionPct}% commission): ${(analysis.ev_banker * 100).toFixed(4)}% per unit\n`
+  content += `• Player EV: ${(analysis.ev_player * 100).toFixed(4)}% per unit\n`
+  content += `• Observed ROI: ${(m.roi * 100).toFixed(4)}%\n`
+  content += `• Deviation from theoretical: ${((m.roi - analysis.ev_banker) * 100).toFixed(4)}% (${direction} expected)\n`
+  if (analysis.martingale_levels_to_bust < 20) {
+    content += `• Progression bust threshold: ${analysis.martingale_levels_to_bust} consecutive losses\n`
+    content += `• Per-shoe bust probability: ${(analysis.progression_bust_probability * 100).toFixed(3)}%\n`
+  }
+  content += `\n`
+
+  content += `**IMPACT:**\n`
+  content += `• Win Rate: ${(m.win_rate * 100).toFixed(2)}% | Max Drawdown: $${m.max_drawdown.toFixed(2)}\n`
+  content += `• Sharpe Ratio: ${m.sharpe_ratio.toFixed(3)} | Sortino: ${m.sortino_ratio.toFixed(3)}\n`
+  content += `• Risk of Ruin: ${(m.risk_of_ruin * 100).toFixed(3)}% | Kelly: ${(m.kelly_fraction * 100).toFixed(2)}%\n`
+  content += `• VaR (95%): $${m.var_95.toFixed(2)} per shoe\n\n`
+
+  content += recommendationSection(m, results, analysis)
+
+  const confidence = Math.min(95, 60 + Math.floor(Math.log10(m.total_hands + 1) * 10))
+  content += `\n**CONFIDENCE:** ${confidence}/100 — Based on ${m.total_hands.toLocaleString()} hands simulated.\n\n`
+  content += `**HONESTY SCORE:** ${analysis.honesty_score}/100 — ${honestyNote(analysis.honesty_score)}`
+  return content
+}
+
+function noResultsAnalysis(strategy: Strategy, analysis: LocalAnalysis): string {
+  let content = `**FINDING:** No backtest results available. Run a backtest first to enable quantitative analysis.\n\n`
+  content += `**MATH:** Theoretical Banker EV = ${(analysis.ev_banker * 100).toFixed(4)}% per unit with 5% commission. `
+  content += `For Martingale with ${strategy.base_unit}-unit base: bust after ${analysis.martingale_levels_to_bust} consecutive losses.\n\n`
+  content += `**RECOMMENDATION:** Run a backtest with at least 10,000 shoes for statistically meaningful results (700,000+ hands).\n\n`
+  content += `**CONFIDENCE:** N/A — No simulation data available.\n\n**HONESTY SCORE:** N/A`
+  return content
+}
+
+function martingaleAnalysis(strategy: Strategy, results: BacktestResults): string {
+  const bankroll = results.config.starting_bankroll
+  let content = `\n\n---\n*Martingale Analysis for ${strategy.name}:*\n`
+  content += `Base unit: ${strategy.base_unit} | Starting bankroll: ${bankroll}\n`
+  const levels = Math.floor(Math.log2(bankroll / strategy.base_unit))
+  let exposure = 0
+  for (let i = 0; i <= levels; i++) {
+    exposure += strategy.base_unit * Math.pow(2, i)
+  }
+  content += `Levels before bankroll exhaustion: ${levels}\n`
+  content += `Total exposure at bust: $${exposure.toFixed(0)}\n`
+  content += `Probability of hitting bust sequence per shoe: ${((1 - Math.pow(1 - Math.pow(0.4462, levels), 70)) * 100).toFixed(3)}%`
+  return content
+}
+
 function formatLocalAnalysis(
   strategy: Strategy,
   results: BacktestResults | null,
   analysis: LocalAnalysis,
   userMessage: string
 ): string {
-  const m = results?.metrics
-
   let content = `*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*\n\n`
-
-  if (m) {
-    content += `**FINDING:** ${
-      m.net_pnl >= 0
-        ? `Strategy shows net positive P&L of $${m.net_pnl.toFixed(2)} over ${results!.config.num_shoes.toLocaleString()} shoes, but this likely reflects variance rather than structural edge.`
-        : `Strategy shows net negative P&L of $${Math.abs(m.net_pnl).toFixed(2)} — consistent with the theoretical house edge.`
-    }\n\n`
-
-    content += `**MATH:**\n`
-    content += `• Banker EV (${((results?.config.commission_rate ?? 0.05) * 100).toFixed(0)}% commission): ${(analysis.ev_banker * 100).toFixed(4)}% per unit\n`
-    content += `• Player EV: ${(analysis.ev_player * 100).toFixed(4)}% per unit\n`
-    content += `• Observed ROI: ${(m.roi * 100).toFixed(4)}%\n`
-    content += `• Deviation from theoretical: ${((m.roi - analysis.ev_banker) * 100).toFixed(4)}% (${m.roi > analysis.ev_banker ? 'above' : 'below'} expected)\n`
-    if (analysis.martingale_levels_to_bust < 20) {
-      content += `• Progression bust threshold: ${analysis.martingale_levels_to_bust} consecutive losses\n`
-      content += `• Per-shoe bust probability: ${(analysis.progression_bust_probability * 100).toFixed(3)}%\n`
-    }
-    content += `\n`
-
-    content += `**IMPACT:**\n`
-    content += `• Win Rate: ${(m.win_rate * 100).toFixed(2)}% | Max Drawdown: $${m.max_drawdown.toFixed(2)}\n`
-    content += `• Sharpe Ratio: ${m.sharpe_ratio.toFixed(3)} | Sortino: ${m.sortino_ratio.toFixed(3)}\n`
-    content += `• Risk of Ruin: ${(m.risk_of_ruin * 100).toFixed(3)}% | Kelly: ${(m.kelly_fraction * 100).toFixed(2)}%\n`
-    content += `• VaR (95%): $${m.var_95.toFixed(2)} per shoe\n\n`
-
-    if (analysis.key_findings.length > 0) {
-      content += `**RECOMMENDATION:**\n`
-      analysis.key_findings.forEach((f) => {
-        content += `⚠ ${f}\n`
-      })
-      content += `\nSuggested improvements:\n`
-      if (m.risk_of_ruin > 0.05) {
-        content += `• Reduce base unit or add stricter bankroll guard (current guard: check modifiers)\n`
-      }
-      if (m.max_drawdown > (results?.config.starting_bankroll ?? 5000) * 0.3) {
-        content += `• Lower stop-loss threshold to limit drawdown exposure\n`
-      }
-      if (m.sharpe_ratio < 0.5) {
-        content += `• Consider flat betting to reduce variance while maintaining similar EV\n`
-      }
-    } else {
-      content += `**RECOMMENDATION:** Strategy parameters appear conservative. Consider tightening stop-loss triggers and exploring lower commission variants (EZ Baccarat at 0%) to improve effective EV.\n`
-    }
-
-    content += `\n**CONFIDENCE:** ${Math.min(95, 60 + Math.floor(Math.log10(m.total_hands + 1) * 10))}/100 — Based on ${m.total_hands.toLocaleString()} hands simulated.\n\n`
-    content += `**HONESTY SCORE:** ${analysis.honesty_score}/100 — ${
-      analysis.honesty_score > 70
-        ? 'High probability results reflect variance, not genuine edge.'
-        : analysis.honesty_score > 40
-        ? 'Moderate uncertainty — more simulation data needed to distinguish signal from noise.'
-        : 'Low sample size — results are statistically inconclusive.'
-    }`
-  } else {
-    content += `**FINDING:** No backtest results available. Run a backtest first to enable quantitative analysis.\n\n`
-    content += `**MATH:** Theoretical Banker EV = ${(analysis.ev_banker * 100).toFixed(4)}% per unit with 5% commission. `
-    content += `For Martingale with ${strategy.base_unit}-unit base: bust after ${analysis.martingale_levels_to_bust} consecutive losses.\n\n`
-    content += `**RECOMMENDATION:** Run a backtest with at least 10,000 shoes for statistically meaningful results (700,000+ hands).\n\n`
-    content += `**CONFIDENCE:** N/A — No simulation data available.\n\n**HONESTY SCORE:** N/A`
-  }
+  content += results ? resultsAnalysis(results.metrics, results, analysis) : noResultsAnalysis(strategy, analysis)
 
   // Handle specific questions about strategy
-  if (userMessage.toLowerCase().includes('martingale') && m) {
-    content += `\n\n---\n*Martingale Analysis for ${strategy.name}:*\n`
-    content += `Base unit: ${strategy.base_unit} | Starting bankroll: ${results!.config.starting_bankroll}\n`
-    const levels = Math.floor(Math.log2(results!.config.starting_bankroll / strategy.base_unit))
-    let exposure = 0
-    for (let i = 0; i <= levels; i++) {
-      exposure += strategy.base_unit * Math.pow(2, i)
-    }
-    content += `Levels before bankroll exhaustion: ${levels}\n`
-    content += `Total exposure at bust: $${exposure.toFixed(0)}\n`
-    content += `Probability of hitting bust sequence per shoe: ${((1 - Math.pow(1 - Math.pow(0.4462, levels), 70)) * 100).toFixed(3)}%`
+  if (results && userMessage.toLowerCase().includes('martingale')) {
+    content += martingaleAnalysis(strategy, results)
   }
 
   return content
@@ -324,8 +343,8 @@ export async function sendAgentRequest(
         confidence: extractConfidence(content),
       },
     }
-  } catch (err) {
-    // Fallback to built-in analysis
+  } catch {
+    // The API is unreachable or failed: fall back to the built-in analysis.
     const analysis = builtInAnalysis(strategy, results)
     const content = formatLocalAnalysis(strategy, results, analysis, userMessage)
 
@@ -347,11 +366,11 @@ export async function sendAgentRequest(
 // ────────────────────────────────────────────────────────────
 
 function extractHonestyScore(content: string): number | undefined {
-  const match = content.match(/HONESTY\s+SCORE[:\s*]*(\d+)/i)
-  return match ? parseInt(match[1], 10) : undefined
+  const match = /HONESTY\s+SCORE[:\s*]*(\d+)/i.exec(content)
+  return match ? Number.parseInt(match[1], 10) : undefined
 }
 
 function extractConfidence(content: string): number | undefined {
-  const match = content.match(/CONFIDENCE[:\s*]*(\d+)/i)
-  return match ? parseInt(match[1], 10) : undefined
+  const match = /CONFIDENCE[:\s*]*(\d+)/i.exec(content)
+  return match ? Number.parseInt(match[1], 10) : undefined
 }

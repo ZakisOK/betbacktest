@@ -26,6 +26,11 @@ function normalize(
   return invert ? 100 - normalized : normalized
 }
 
+function scoreColor(score: number): string {
+  if (score >= 60) return 'text-green-400'
+  return score >= 40 ? 'text-yellow-400' : 'text-red-400'
+}
+
 export const RiskMetrics: React.FC<Props> = ({ results, previous }) => {
   const m = results.metrics
   const p = previous?.metrics
@@ -88,11 +93,11 @@ export const RiskMetrics: React.FC<Props> = ({ results, previous }) => {
           <div className="flex items-center gap-3 text-[10px]">
             <span className="flex items-center gap-1">
               <span className="w-2 h-0.5 bg-blue-400 inline-block" />
-              Current
+              <span>Current</span>
             </span>
             <span className="flex items-center gap-1">
               <span className="w-2 h-0.5 bg-slate-500 inline-block" />
-              Previous
+              <span>Previous</span>
             </span>
           </div>
         )}
@@ -142,8 +147,7 @@ export const RiskMetrics: React.FC<Props> = ({ results, previous }) => {
           const score = Math.round(
             radarData.reduce((s, d) => s + d.current, 0) / radarData.length
           )
-          const color =
-            score >= 60 ? 'text-green-400' : score >= 40 ? 'text-yellow-400' : 'text-red-400'
+          const color = scoreColor(score)
           return (
             <>
               <div className={`text-2xl font-mono font-bold ${color}`}>{score}</div>

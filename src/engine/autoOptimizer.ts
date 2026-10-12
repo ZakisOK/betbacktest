@@ -112,7 +112,7 @@ function buildSelective(
     // Skip hands after losing streak
     {
       id: uid(), priority: 3, enabled: true,
-      label: `Skip ${skipAfterLosses > 1 ? skipAfterLosses : 1} after loss streak`,
+      label: `Skip ${Math.max(skipAfterLosses, 1)} after loss streak`,
       trigger: { type: 'streak', side: 'Any', direction: 'consecutive_losses', min_length: skipAfterLosses },
       action: { type: 'skip_hand', skip_count: 2 },
       modifiers: { shoe_reset: 'carry' },
@@ -189,22 +189,23 @@ interface MutationParams {
 
 /** Extract numerical param from a rule label */
 function extractParam(rules: Rule[], labelPart: string): number | undefined {
+  const re = new RegExp(String.raw`${labelPart}\s*\$?([\d.]+)`)
   for (const r of rules) {
-    const m = r.label.match(new RegExp(`${labelPart}\\s*[\\$]?([\\d.]+)`))
-    if (m) return parseFloat(m[1])
+    const m = re.exec(r.label)
+    if (m) return Number.parseFloat(m[1])
   }
   return undefined
 }
 
 function decodeStrategy(s: Strategy): MutationParams {
   const labels = s.rules.map(r => r.label).join(' ')
-  const sideM = labels.match(/Bet (Banker|Player)/)
+  const sideM = /Bet (Banker|Player)/.exec(labels)
   return {
     side:             sideM ? sideM[1] as BetSide : 'Banker',
     minWinStreak:     extractParam(s.rules, 'Enter after') ?? 2,
     skipAfterLosses:  extractParam(s.rules, 'Skip') ?? 2,
-    stopLoss:         extractParam(s.rules, 'Stop loss \\$') ?? 300,
-    takeProfit:       extractParam(s.rules, 'Take profit \\$') ?? 500,
+    stopLoss:         extractParam(s.rules, String.raw`Stop loss \$`) ?? 300,
+    takeProfit:       extractParam(s.rules, String.raw`Take profit \$`) ?? 500,
   }
 }
 
@@ -263,12 +264,13 @@ async function getAIGuidance(
       [],
     )
     const text = msg.content
-    const jsonMatch = text.match(/\{[^}]+\}/)
+    // The first flat {...} object in the reply
+    const jsonMatch = /\{[^{}]+\}/.exec(text)
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]) as MutationParams
     }
   } catch {
-    // ignore
+    // No reply or no valid JSON: the caller falls back to plain mutation.
   }
   return null
 }
@@ -276,6 +278,151 @@ async function getAIGuidance(
 // ────────────────────────────────────────────────────────────
 // Main loop
 // ────────────────────────────────────────────────────────────
+
+class OptimizerAborted extends Error {}
+
+function checkAbort(cfg: AutoOptimizerConfig): void {
+  if (cfg.signal.aborted) throw new OptimizerAborted()
+}
+
+function yieldToUI(): Promise<void> {
+  return new Promise(r => setTimeout(r, 0))
+}
+
+async function trySimulate(s: Strategy, simCfg: SimulationConfig): Promise<BacktestResults | null> {
+  try {
+    return await runSimulation(s, simCfg, () => {})
+  } catch {
+    return null // a failed candidate is skipped
+  }
+}
+
+function topByWinRate(scored: { strategy: Strategy; winRate: number }[]): Strategy[] {
+  return [...scored].sort((a, b) => b.winRate - a.winRate).slice(0, 10).map(r => r.strategy)
+}
+
+interface RunContext {
+  cfg: AutoOptimizerConfig
+  state: IterationState
+  update: (patch: Partial<IterationState>) => void
+  fastCfg: SimulationConfig
+  deepCfg: SimulationConfig
+}
+
+interface DeepBest {
+  strategy: Strategy
+  results: BacktestResults
+  winRate: number
+}
+
+// The phases run candidates one at a time on purpose: each result updates the
+// UI, the abort signal is checked between runs, and later phases build on
+// earlier ones. Hence the NOSONAR marks on awaits inside loops.
+
+// Phase 1: wide scan. Returns the top 10 by win rate.
+async function scanPhase(ctx: RunContext): Promise<Strategy[]> {
+  const { cfg, state, update } = ctx
+  update({ phase: 'scan' })
+  const candidates = buildInitialCandidates(cfg.baseUnit, cfg.bankroll)
+  const scanned: { strategy: Strategy; winRate: number }[] = []
+
+  for (let i = 0; i < candidates.length; i++) {
+    checkAbort(cfg)
+    const r = await trySimulate(candidates[i], ctx.fastCfg) // NOSONAR: sequential on purpose
+    if (r) {
+      scanned.push({ strategy: candidates[i], winRate: r.metrics.win_rate })
+      state.log.push({ iteration: 0, phase: 'scan', label: candidates[i].name, winRate: r.metrics.win_rate, netPnl: r.metrics.net_pnl, shoes: cfg.fastShoes })
+    }
+    if (i % 10 === 0) {
+      update({ phase: 'scan' })
+      await yieldToUI() // NOSONAR: deliberate yield to the UI
+    }
+  }
+
+  return topByWinRate(scanned)
+}
+
+// Phase 2: deep backtest of the pool. Returns the pool's best, or null when
+// every run failed.
+async function deepPhase(ctx: RunContext, pool: Strategy[], iteration: number): Promise<DeepBest | null> {
+  const { cfg, state, update } = ctx
+  let best: DeepBest | null = null
+
+  for (const s of pool) {
+    checkAbort(cfg)
+    const r = await trySimulate(s, ctx.deepCfg) // NOSONAR: sequential on purpose
+    if (r) {
+      const wr = r.metrics.win_rate
+      state.log.push({ iteration, phase: 'deep', label: s.name, winRate: wr, netPnl: r.metrics.net_pnl, shoes: cfg.deepShoes })
+      if (!best || wr > best.winRate) best = { strategy: s, results: r, winRate: wr }
+      if (wr > state.bestWinRate) update({ bestWinRate: wr, bestStrategy: s, bestResults: r })
+    }
+    await yieldToUI() // NOSONAR: deliberate yield to the UI
+  }
+
+  return best
+}
+
+// Phase 4 (every 3rd iteration): one strategy from the agent's suggested
+// parameters, then mutations of the current best.
+async function aiGuidePhase(ctx: RunContext, best: DeepBest): Promise<Strategy[]> {
+  const { cfg } = ctx
+  ctx.update({ phase: 'ai_guide' })
+  const aiParams = await getAIGuidance(best.strategy, best.results)
+  if (!aiParams) return mutate(best.strategy, cfg.baseUnit, cfg.bankroll).slice(0, 10)
+
+  const aiStrategy = buildSelective(
+    aiParams.side ?? 'Banker',
+    aiParams.minWinStreak ?? 2,
+    aiParams.skipAfterLosses ?? 2,
+    aiParams.stopLoss ?? 300,
+    aiParams.takeProfit ?? 500,
+    cfg.baseUnit,
+    cfg.bankroll,
+  )
+  return [aiStrategy, ...mutate(best.strategy, cfg.baseUnit, cfg.bankroll).slice(0, 9)]
+}
+
+// Phase 3: fast-test up to 50 mutations around the best and keep the top 10.
+async function mutatePhase(ctx: RunContext, best: Strategy, iteration: number): Promise<Strategy[]> {
+  const { cfg, state, update } = ctx
+  update({ phase: 'mutate' })
+  const mutations = mutate(best, cfg.baseUnit, cfg.bankroll).slice(0, 50)
+  const scored: { strategy: Strategy; winRate: number }[] = []
+
+  for (let i = 0; i < mutations.length; i++) {
+    checkAbort(cfg)
+    const r = await trySimulate(mutations[i], ctx.fastCfg) // NOSONAR: sequential on purpose
+    if (r) {
+      scored.push({ strategy: mutations[i], winRate: r.metrics.win_rate })
+      state.log.push({ iteration, phase: 'mutate', label: mutations[i].name, winRate: r.metrics.win_rate, netPnl: r.metrics.net_pnl, shoes: cfg.fastShoes })
+    }
+    if (i % 10 === 0) await yieldToUI() // NOSONAR: deliberate yield to the UI
+  }
+
+  const pool = topByWinRate(scored)
+  update({ phase: 'mutate' })
+  return pool
+}
+
+async function optimize(ctx: RunContext): Promise<void> {
+  const { cfg, state, update } = ctx
+  let pool = await scanPhase(ctx)
+
+  for (let iteration = 1; iteration <= cfg.maxIterations; iteration++) {
+    checkAbort(cfg)
+    update({ iteration, phase: 'deep' })
+    const deepBest = await deepPhase(ctx, pool, iteration) // NOSONAR: each iteration builds on the last
+    update({ iteration, phase: 'deep' })
+
+    if (state.bestWinRate >= cfg.targetWinRate) return
+    if (!deepBest) break
+
+    pool = iteration % 3 === 0
+      ? await aiGuidePhase(ctx, deepBest) // NOSONAR: each iteration builds on the last
+      : await mutatePhase(ctx, deepBest.strategy, iteration) // NOSONAR: each iteration builds on the last
+  }
+}
 
 export async function runAutoOptimizer(cfg: AutoOptimizerConfig): Promise<IterationState> {
   const state: IterationState = {
@@ -294,104 +441,20 @@ export async function runAutoOptimizer(cfg: AutoOptimizerConfig): Promise<Iterat
     cfg.onUpdate({ ...state, log: [...state.log] })
   }
 
-  const fastCfg = mkCfg(cfg.bankroll, cfg.fastShoes)
-  const deepCfg = mkCfg(cfg.bankroll, cfg.deepShoes)
-
-  let pool: Strategy[] = []
-  let iteration = 0
-
-  // ── Phase 1: Wide scan ────────────────────────────────────
-  update({ phase: 'scan' })
-  const initialCandidates = buildInitialCandidates(cfg.baseUnit, cfg.bankroll)
-  const scanResults: { strategy: Strategy; winRate: number; results: BacktestResults }[] = []
-
-  for (let i = 0; i < initialCandidates.length; i++) {
-    if (cfg.signal.aborted) { update({ aborted: true }); return state }
-    try {
-      const r = await runSimulation(initialCandidates[i], fastCfg, () => {})
-      scanResults.push({ strategy: initialCandidates[i], winRate: r.metrics.win_rate, results: r })
-      state.log.push({ iteration: 0, phase: 'scan', label: initialCandidates[i].name, winRate: r.metrics.win_rate, netPnl: r.metrics.net_pnl, shoes: cfg.fastShoes })
-    } catch { /* skip */ }
-    if (i % 10 === 0) {
-      update({ phase: 'scan' })
-      await new Promise(r => setTimeout(r, 0))
-    }
+  const ctx: RunContext = {
+    cfg,
+    state,
+    update,
+    fastCfg: mkCfg(cfg.bankroll, cfg.fastShoes),
+    deepCfg: mkCfg(cfg.bankroll, cfg.deepShoes),
   }
 
-  // Sort by win rate, take top 10
-  scanResults.sort((a, b) => b.winRate - a.winRate)
-  pool = scanResults.slice(0, 10).map(r => r.strategy)
-
-  // ── Iteration loop ────────────────────────────────────────
-  while (iteration < cfg.maxIterations) {
-    if (cfg.signal.aborted) { update({ aborted: true }); return state }
-    iteration++
-
-    // Phase 2: Deep backtest on pool
-    update({ iteration, phase: 'deep' })
-    let deepBest: { strategy: Strategy; results: BacktestResults; winRate: number } | null = null
-
-    for (const s of pool) {
-      if (cfg.signal.aborted) { update({ aborted: true }); return state }
-      try {
-        const r = await runSimulation(s, deepCfg, () => {})
-        const wr = r.metrics.win_rate
-        state.log.push({ iteration, phase: 'deep', label: s.name, winRate: wr, netPnl: r.metrics.net_pnl, shoes: cfg.deepShoes })
-        if (!deepBest || wr > deepBest.winRate) deepBest = { strategy: s, results: r, winRate: wr }
-        if (wr > state.bestWinRate) {
-          update({ bestWinRate: wr, bestStrategy: s, bestResults: r })
-        }
-      } catch { /* skip */ }
-      await new Promise(r => setTimeout(r, 0))
-    }
-
-    update({ iteration, phase: 'deep' })
-
-    // Check target
-    if (state.bestWinRate >= cfg.targetWinRate) {
-      update({ done: true, phase: 'done' })
-      return state
-    }
-
-    if (!deepBest) break
-
-    // Phase 4 (every 3rd iteration): AI guidance
-    if (iteration % 3 === 0) {
-      update({ phase: 'ai_guide' })
-      const aiParams = await getAIGuidance(deepBest.strategy, deepBest.results)
-      if (aiParams) {
-        const aiStrategy = buildSelective(
-          aiParams.side ?? 'Banker',
-          aiParams.minWinStreak ?? 2,
-          aiParams.skipAfterLosses ?? 2,
-          aiParams.stopLoss ?? 300,
-          aiParams.takeProfit ?? 500,
-          cfg.baseUnit,
-          cfg.bankroll,
-        )
-        pool = [aiStrategy, ...mutate(deepBest.strategy, cfg.baseUnit, cfg.bankroll).slice(0, 9)]
-      } else {
-        pool = mutate(deepBest.strategy, cfg.baseUnit, cfg.bankroll).slice(0, 10)
-      }
-    } else {
-      // Phase 3: Mutate around best
-      update({ phase: 'mutate' })
-      const mutations = mutate(deepBest.strategy, cfg.baseUnit, cfg.bankroll)
-      // Fast-filter mutations
-      const mutResults: { strategy: Strategy; winRate: number }[] = []
-      for (let i = 0; i < Math.min(50, mutations.length); i++) {
-        if (cfg.signal.aborted) { update({ aborted: true }); return state }
-        try {
-          const r = await runSimulation(mutations[i], fastCfg, () => {})
-          mutResults.push({ strategy: mutations[i], winRate: r.metrics.win_rate })
-          state.log.push({ iteration, phase: 'mutate', label: mutations[i].name, winRate: r.metrics.win_rate, netPnl: r.metrics.net_pnl, shoes: cfg.fastShoes })
-        } catch { /* skip */ }
-        if (i % 10 === 0) await new Promise(r => setTimeout(r, 0))
-      }
-      mutResults.sort((a, b) => b.winRate - a.winRate)
-      pool = mutResults.slice(0, 10).map(r => r.strategy)
-      update({ phase: 'mutate' })
-    }
+  try {
+    await optimize(ctx)
+  } catch (e) {
+    if (!(e instanceof OptimizerAborted)) throw e
+    update({ aborted: true })
+    return state
   }
 
   update({ done: true, phase: 'done' })

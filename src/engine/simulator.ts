@@ -31,6 +31,8 @@ interface ProgressionState {
   sequenceStep: number; // for 1-3-2-6
 }
 
+type OutcomeCode = "B" | "P" | "T";
+
 interface SimState {
   bankroll: number;
   session_pnl: number;
@@ -40,7 +42,7 @@ interface SimState {
   lock_remaining: number;
   consecutive_wins: Record<BetSide, number>;
   consecutive_losses: Record<BetSide, number>;
-  last_outcomes: ("B" | "P" | "T")[];
+  last_outcomes: OutcomeCode[];
   hand_number: number;
   skip_remaining: number;
   stopped: boolean;
@@ -77,58 +79,77 @@ function initState(strategy: Strategy, config: SimulationConfig): SimState {
 // Trigger Evaluation
 // ────────────────────────────────────────────────────────────
 
+// Longest current streak for one side, or across all sides when side is unset.
+function streakLength(streaks: Record<BetSide, number>, side: BetSide | undefined): number {
+  if (side) return streaks[side];
+  return Math.max(...Object.values(streaks));
+}
+
+// True when the last minLen * 2 outcomes never repeat back to back.
+function isAlternating(outcomes: SimState["last_outcomes"], minLen: number): boolean {
+  const needed = minLen * 2;
+  if (outcomes.length < needed) return false;
+  const recent = outcomes.slice(-needed);
+  for (let i = 1; i < recent.length; i++) {
+    if (recent[i] === recent[i - 1]) return false;
+  }
+  return true;
+}
+
+function streakTriggered(trigger: Trigger, state: SimState): boolean {
+  const side = trigger.side === "Any" ? undefined : (trigger.side as BetSide);
+  const minLen = trigger.min_length ?? 1;
+  switch (trigger.direction) {
+    case "consecutive_wins":
+      return streakLength(state.consecutive_wins, side) >= minLen;
+    case "consecutive_losses":
+      return streakLength(state.consecutive_losses, side) >= minLen;
+    case "alternating":
+      return isAlternating(state.last_outcomes, minLen);
+    default:
+      return false;
+  }
+}
+
+function patternTriggered(trigger: Trigger, state: SimState): boolean {
+  const pattern = trigger.pattern ?? "";
+  const parts = pattern.toUpperCase().split("-").filter(Boolean);
+  if (parts.length === 0) return false;
+  const lookback = trigger.lookback ?? parts.length;
+  if (state.last_outcomes.length < parts.length) return false;
+  const recent = state.last_outcomes.slice(-Math.min(lookback, state.last_outcomes.length));
+  // Check if the pattern appears at the end
+  if (recent.length < parts.length) return false;
+  const tail = recent.slice(-parts.length);
+  return parts.every((p, i) => p.startsWith(tail[i]));
+}
+
+function financialTriggered(trigger: Trigger, state: SimState): boolean {
+  const threshold = trigger.threshold ?? 0;
+  switch (trigger.condition) {
+    case "session_loss":
+      return state.session_pnl <= threshold;
+    case "session_profit":
+      return state.session_pnl >= threshold;
+    case "bankroll_below":
+      return state.bankroll <= threshold;
+    case "bankroll_above":
+      return state.bankroll >= threshold;
+    default:
+      return false;
+  }
+}
+
 function evaluateTrigger(trigger: Trigger, state: SimState): boolean {
   switch (trigger.type) {
-    case "streak": {
-      const side = trigger.side === "Any" ? undefined : (trigger.side as BetSide);
-      const minLen = trigger.min_length ?? 1;
-      if (trigger.direction === "consecutive_wins") {
-        if (side) return state.consecutive_wins[side] >= minLen;
-        return Math.max(...Object.values(state.consecutive_wins)) >= minLen;
-      } else if (trigger.direction === "consecutive_losses") {
-        if (side) return state.consecutive_losses[side] >= minLen;
-        return Math.max(...Object.values(state.consecutive_losses)) >= minLen;
-      } else if (trigger.direction === "alternating") {
-        // Check for alternating pattern in recent outcomes
-        const needed = minLen * 2;
-        if (state.last_outcomes.length < needed) return false;
-        const recent = state.last_outcomes.slice(-needed);
-        for (let i = 1; i < recent.length; i++) {
-          if (recent[i] === recent[i - 1]) return false;
-        }
-        return true;
-      }
-      return false;
-    }
+    case "streak":
+      return streakTriggered(trigger, state);
 
-    case "pattern": {
-      const pattern = trigger.pattern ?? "";
-      const parts = pattern.toUpperCase().split("-").filter(Boolean);
-      if (parts.length === 0) return false;
-      const lookback = trigger.lookback ?? parts.length;
-      if (state.last_outcomes.length < parts.length) return false;
-      const recent = state.last_outcomes.slice(-Math.min(lookback, state.last_outcomes.length));
-      // Check if the pattern appears at the end
-      if (recent.length < parts.length) return false;
-      const tail = recent.slice(-parts.length);
-      return parts.every((p, i) => p[0] === tail[i]);
-    }
+    case "pattern":
+      return patternTriggered(trigger, state);
 
-    case "financial_state": {
-      const threshold = trigger.threshold ?? 0;
-      switch (trigger.condition) {
-        case "session_loss":
-          return state.session_pnl <= threshold;
-        case "session_profit":
-          return state.session_pnl >= threshold;
-        case "bankroll_below":
-          return state.bankroll <= threshold;
-        case "bankroll_above":
-          return state.bankroll >= threshold;
-        default:
-          return false;
-      }
-    }
+    case "financial_state":
+      return financialTriggered(trigger, state);
 
     case "hand_count": {
       const min = trigger.hand_min ?? 0;
@@ -282,21 +303,35 @@ interface BetDecision {
   matchedAction?: Action;
 }
 
+// A fresh object each time: evaluateStrategy writes matchedAction onto it.
+function skipDecision(): BetDecision {
+  return { side: null, amount: 0, skip: true, stop: false };
+}
+
+function stopSession(): BetDecision {
+  return { side: null, amount: 0, skip: false, stop: true };
+}
+
+function cappedAmount(amount: number, maxBet: number | undefined): number {
+  return maxBet && amount > maxBet ? maxBet : amount;
+}
+
+function placeBetAmount(action: Action, mod: Rule["modifiers"], state: SimState): number {
+  const amount = cappedAmount(state.current_unit * (action.unit_size ?? 1), mod.max_bet);
+  if (!mod.bankroll_guard) return amount;
+  const minBankroll = state.bankroll * mod.bankroll_guard;
+  if (state.bankroll - amount < minBankroll) return Math.max(0, state.bankroll - minBankroll);
+  return amount;
+}
+
 function applyAction(action: Action, rule: Rule, state: SimState): BetDecision {
   const mod = rule.modifiers;
 
   switch (action.type) {
     case "place_bet": {
       const side = state.locked_side ?? action.side ?? "Banker";
-      let amount = state.current_unit * (action.unit_size ?? 1);
-      if (mod.max_bet && amount > mod.max_bet) amount = mod.max_bet;
-      if (mod.bankroll_guard) {
-        const minBankroll = state.bankroll * mod.bankroll_guard;
-        if (state.bankroll - amount < minBankroll) {
-          amount = Math.max(0, state.bankroll - minBankroll);
-        }
-      }
-      if (amount <= 0) return { side: null, amount: 0, skip: true, stop: false };
+      const amount = placeBetAmount(action, mod, state);
+      if (amount <= 0) return skipDecision();
       return { side, amount, skip: false, stop: false };
     }
 
@@ -305,41 +340,34 @@ function applyAction(action: Action, rule: Rule, state: SimState): BetDecision {
       state.current_unit = newUnit;
       // After adjusting, also place a bet at the new unit
       const side = state.locked_side ?? "Banker";
-      let amount = state.current_unit;
-      if (mod.max_bet && amount > mod.max_bet) amount = mod.max_bet;
+      const amount = cappedAmount(state.current_unit, mod.max_bet);
       return { side, amount, skip: false, stop: false };
     }
 
     case "skip_hand":
       state.skip_remaining = action.skip_count ?? 1;
-      return { side: null, amount: 0, skip: true, stop: false };
+      return skipDecision();
 
     case "reset_progression":
       state.current_unit = state.base_unit;
       state.progression.level = 0;
       state.progression.fibonacci = [1, 1];
       state.progression.sequenceStep = 0;
-      return { side: null, amount: 0, skip: true, stop: false };
+      return skipDecision();
 
     case "lock_side":
       state.locked_side = action.side ?? "Banker";
       state.lock_remaining = action.lock_duration ?? 5;
-      return { side: null, amount: 0, skip: true, stop: false };
+      return skipDecision();
 
     case "stop_loss":
-      if (state.session_pnl <= (action.threshold ?? -Infinity)) {
-        return { side: null, amount: 0, skip: false, stop: true };
-      }
-      return { side: null, amount: 0, skip: true, stop: false };
+      return state.session_pnl <= (action.threshold ?? -Infinity) ? stopSession() : skipDecision();
 
     case "take_profit":
-      if (state.session_pnl >= (action.threshold ?? Infinity)) {
-        return { side: null, amount: 0, skip: false, stop: true };
-      }
-      return { side: null, amount: 0, skip: true, stop: false };
+      return state.session_pnl >= (action.threshold ?? Infinity) ? stopSession() : skipDecision();
 
     default:
-      return { side: null, amount: 0, skip: true, stop: false };
+      return skipDecision();
   }
 }
 
@@ -362,7 +390,7 @@ function evaluateStrategy(state: SimState, rules: Rule[]): BetDecision {
   }
 
   // No matching rule — skip hand
-  return { side: null, amount: 0, skip: true, stop: false };
+  return skipDecision();
 }
 
 // ────────────────────────────────────────────────────────────
@@ -400,14 +428,13 @@ function computePnL(
 // Update State After Hand
 // ────────────────────────────────────────────────────────────
 
-function updateState(
-  state: SimState,
-  outcome: "Banker" | "Player" | "Tie",
-  decision: BetDecision,
-  pnl: number,
-  _config: SimulationConfig
-): void {
-  // Track consecutive streaks for all sides
+function outcomeCode(outcome: "Banker" | "Player" | "Tie"): OutcomeCode {
+  if (outcome === "Banker") return "B";
+  return outcome === "Player" ? "P" : "T";
+}
+
+// Track consecutive streaks for all sides
+function updateStreaks(state: SimState, outcome: "Banker" | "Player" | "Tie"): void {
   const sides: BetSide[] = ["Banker", "Player", "Tie"];
   for (const side of sides) {
     if (outcome === side) {
@@ -418,26 +445,36 @@ function updateState(
       state.consecutive_losses[side]++;
     }
   }
+}
+
+// Update progression after a win or loss on a placed bet. A push changes nothing.
+function updateProgression(state: SimState, decision: BetDecision, pnl: number): void {
+  if (!decision.side || decision.amount <= 0 || !decision.matchedAction) return;
+  if (pnl > 0) {
+    updateProgressionOnWin(state, decision.matchedAction);
+  } else if (pnl < 0) {
+    updateProgressionOnLoss(state, decision.matchedAction);
+  }
+}
+
+function updateState(
+  state: SimState,
+  outcome: "Banker" | "Player" | "Tie",
+  decision: BetDecision,
+  pnl: number,
+  _config: SimulationConfig
+): void {
+  updateStreaks(state, outcome);
 
   // Update recent outcome history (keep last 50)
-  const outCode = outcome === "Banker" ? "B" : outcome === "Player" ? "P" : "T";
-  state.last_outcomes.push(outCode);
+  state.last_outcomes.push(outcomeCode(outcome));
   if (state.last_outcomes.length > 50) state.last_outcomes.shift();
 
   // Update bankroll
   state.bankroll += pnl;
   state.session_pnl += pnl;
 
-  // Update progression after win/loss
-  if (decision.side && decision.amount > 0 && decision.matchedAction) {
-    const won = pnl > 0;
-    const lost = pnl < 0;
-    if (won) {
-      updateProgressionOnWin(state, decision.matchedAction);
-    } else if (lost) {
-      updateProgressionOnLoss(state, decision.matchedAction);
-    }
-  }
+  updateProgression(state, decision, pnl);
 
   // Lock management
   if (state.lock_remaining > 0) {
@@ -455,6 +492,15 @@ function updateState(
 // Simulate One Shoe
 // ────────────────────────────────────────────────────────────
 
+// Evaluate the strategy, unless an earlier skip_hand still has hands to sit out.
+function nextDecision(state: SimState, rules: Rule[]): BetDecision {
+  if (state.skip_remaining > 0) {
+    state.skip_remaining--;
+    return skipDecision();
+  }
+  return evaluateStrategy(state, rules);
+}
+
 function simulateShoe(
   shoeNum: number,
   strategy: Strategy,
@@ -468,17 +514,15 @@ function simulateShoe(
 
   const cutPoint = shoe.length - config.cut_card_position;
   const hands: HandResult[] = [];
-  const sequence: ("B" | "P" | "T")[] = [];
+  const sequence: OutcomeCode[] = [];
   const startingBankroll = state.bankroll;
 
   // Reset shoe-level state if configured
-  for (const rule of strategy.rules) {
-    if (rule.modifiers.shoe_reset === "reset") {
-      state.current_unit = state.base_unit;
-      state.progression.level = 0;
-      state.progression.fibonacci = [1, 1];
-      state.progression.sequenceStep = 0;
-    }
+  if (strategy.rules.some((rule) => rule.modifiers.shoe_reset === "reset")) {
+    state.current_unit = state.base_unit;
+    state.progression.level = 0;
+    state.progression.fibonacci = [1, 1];
+    state.progression.sequenceStep = 0;
   }
 
   state.session_pnl = 0;
@@ -487,14 +531,7 @@ function simulateShoe(
   state.consecutive_losses = { Banker: 0, Player: 0, Tie: 0 };
 
   while (shoe.length > cutPoint && !state.stopped) {
-    // Evaluate strategy
-    let decision: BetDecision;
-    if (state.skip_remaining > 0) {
-      decision = { side: null, amount: 0, skip: true, stop: false };
-      state.skip_remaining--;
-    } else {
-      decision = evaluateStrategy(state, strategy.rules);
-    }
+    const decision = nextDecision(state, strategy.rules);
 
     if (decision.stop) {
       state.stopped = true;
@@ -512,8 +549,7 @@ function simulateShoe(
     const outcome = dealt.outcome;
     const pnl = computePnL(decision, outcome, config.commission_rate, config.tie_handling);
 
-    const outCode = outcome === "Banker" ? "B" : outcome === "Player" ? "P" : "T";
-    sequence.push(outCode);
+    sequence.push(outcomeCode(outcome));
 
     hands.push({
       hand_number: state.hand_number,
@@ -580,7 +616,7 @@ export async function runSimulation(
     if (i % BATCH === 0) {
       onProgress(Math.round((i / config.num_shoes) * 100));
       // Yield to event loop
-      await new Promise((r) => setTimeout(r, 0));
+      await new Promise((r) => setTimeout(r, 0)); // NOSONAR: deliberate yield to the UI
     }
   }
 

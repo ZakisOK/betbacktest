@@ -11,45 +11,48 @@ const QUICK_PROMPTS = [
   'What is my per-shoe bust probability?',
 ]
 
-function renderContent(text: string): React.ReactNode[] {
-  const SECTION_COLORS: Record<string, string> = {
-    'FINDING:':       'rgba(96,165,250,1)',
-    'MATH:':          'rgba(167,139,250,1)',
-    'IMPACT:':        'rgba(251,191,36,1)',
-    'RECOMMENDATION:':'rgba(52,211,153,1)',
-    'CONFIDENCE:':    'rgba(255,255,255,0.7)',
-    'HONESTY SCORE:': 'rgba(251,146,60,1)',
-  }
+const SECTION_COLORS: Record<string, string> = {
+  'FINDING:':       'rgba(96,165,250,1)',
+  'MATH:':          'rgba(167,139,250,1)',
+  'IMPACT:':        'rgba(251,191,36,1)',
+  'RECOMMENDATION:':'rgba(52,211,153,1)',
+  'CONFIDENCE:':    'rgba(255,255,255,0.7)',
+  'HONESTY SCORE:': 'rgba(251,146,60,1)',
+}
 
-  return text.split('\n').map((line, i) => {
-    // Bold section headers like **FINDING:**
-    if (line.startsWith('**') && line.endsWith('**')) {
-      const inner = line.slice(2,-2)
-      const matchKey = Object.keys(SECTION_COLORS).find(k => inner.startsWith(k))
-      if (matchKey) return (
-        <div key={i} className="font-mono text-[10px] font-bold mt-3 mb-1" style={{ color: SECTION_COLORS[matchKey] }}>
-          {inner}
-        </div>
-      )
-    }
-    if (line.startsWith('*[') && line.endsWith(']*')) return (
-      <div key={i} className="text-[9px] italic mb-1" style={{ color:'rgba(255,255,255,0.3)' }}>{line.slice(1,-1)}</div>
+// A message never changes once sent, so a line's position is its identity.
+function renderLine(line: string, position: number): React.ReactNode {
+  // Bold section headers like **FINDING:**
+  if (line.startsWith('**') && line.endsWith('**')) {
+    const inner = line.slice(2,-2)
+    const matchKey = Object.keys(SECTION_COLORS).find(k => inner.startsWith(k))
+    if (matchKey) return (
+      <div key={position} className="font-mono text-[10px] font-bold mt-3 mb-1" style={{ color: SECTION_COLORS[matchKey] }}>
+        {inner}
+      </div>
     )
-    if (line.startsWith('---')) return <div key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.08)', margin:'8px 0' }}/>
-    if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('⚠ ')) {
-      const isWarn = line.startsWith('⚠')
-      return (
-        <div key={i} className="flex gap-1.5 my-0.5">
-          <span className="text-xs shrink-0" style={{ color: isWarn ? 'rgba(251,191,36,0.8)' : 'rgba(255,255,255,0.25)' }}>
-            {isWarn ? '⚠' : '•'}
-          </span>
-          <span className="text-[10px] leading-relaxed" style={{ color:'rgba(255,255,255,0.7)' }}>{line.slice(2)}</span>
-        </div>
-      )
-    }
-    if (line.trim() === '') return <div key={i} className="h-1"/>
-    return <p key={i} className="text-[10px] leading-relaxed" style={{ color:'rgba(255,255,255,0.65)' }}>{line}</p>
-  })
+  }
+  if (line.startsWith('*[') && line.endsWith(']*')) return (
+    <div key={position} className="text-[9px] italic mb-1" style={{ color:'rgba(255,255,255,0.3)' }}>{line.slice(1,-1)}</div>
+  )
+  if (line.startsWith('---')) return <div key={position} style={{ borderBottom:'1px solid rgba(255,255,255,0.08)', margin:'8px 0' }}/>
+  if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('⚠ ')) {
+    const isWarn = line.startsWith('⚠')
+    return (
+      <div key={position} className="flex gap-1.5 my-0.5">
+        <span className="text-xs shrink-0" style={{ color: isWarn ? 'rgba(251,191,36,0.8)' : 'rgba(255,255,255,0.25)' }}>
+          {isWarn ? '⚠' : '•'}
+        </span>
+        <span className="text-[10px] leading-relaxed" style={{ color:'rgba(255,255,255,0.7)' }}>{line.slice(2)}</span>
+      </div>
+    )
+  }
+  if (line.trim() === '') return <div key={position} className="h-1"/>
+  return <p key={position} className="text-[10px] leading-relaxed" style={{ color:'rgba(255,255,255,0.65)' }}>{line}</p>
+}
+
+function renderContent(text: string): React.ReactNode[] {
+  return text.split('\n').map((line, position) => renderLine(line, position))
 }
 
 const Bubble: React.FC<{ msg: AgentMessage }> = ({ msg }) => {
@@ -152,8 +155,8 @@ export const MathAgent: React.FC = () => {
           <div className="mt-3 p-3 rounded-xl" style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)' }}>
             <p className="section-label mb-2">Agent Configuration</p>
             <p className="text-[9px] mb-2" style={{ color:'rgba(255,255,255,0.3)' }}>
-              Works offline with built-in math engine. Run <code className="font-mono">node server.js</code> + set
-              <code className="font-mono"> ANTHROPIC_API_KEY</code> in .env for Claude AI.
+              Works offline with built-in math engine. Run <code className="font-mono">node server.js</code> + set{' '}
+              <code className="font-mono">ANTHROPIC_API_KEY</code> in .env for Claude AI.
             </p>
           </div>
         )}
@@ -221,7 +224,7 @@ export const MathAgent: React.FC = () => {
         <div className="flex gap-2 items-end">
           <textarea ref={inputRef} value={input}
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); handleSend() } }}
+            onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); void handleSend() } }}
             placeholder="Ask the math agent… (Enter to send)"
             rows={2} disabled={isAgentThinking}
             className="flex-1 px-3 py-2 text-xs resize-none rounded-xl transition-all disabled:opacity-50"

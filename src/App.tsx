@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Routes, Route, Link } from 'react-router-dom'
-import { Bot, TrendingUp, Layers, Info, LogOut, Crown, Settings } from 'lucide-react'
+import { Bot, TrendingUp, Layers, Info, LogOut, Crown } from 'lucide-react'
 import { useStore } from './store/useStore'
 import { useAuth } from './hooks/useAuth'
 import { StrategyBuilder } from './components/StrategyBuilder'
@@ -17,6 +17,7 @@ import { Disclaimer } from './pages/Disclaimer'
 import { Cookies } from './pages/Cookies'
 import { ResponsibleGambling } from './pages/ResponsibleGambling'
 import { supabase } from './lib/supabase'
+import { isCheckoutOrigin } from './lib/lemonsqueezy'
 
 type Panel = 'builder' | 'results' | 'agent'
 
@@ -50,14 +51,15 @@ function MigrationModal() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) return
 
-      for (const strategy of pendingMigration ?? []) {
-        await supabase.from('strategies').insert({
+      const { error } = await supabase.from('strategies').insert(
+        (pendingMigration ?? []).map((strategy) => ({
           user_id: session.user.id,
           name: strategy.name,
           version: strategy.version ?? '1.0',
           config_json: strategy,
-        })
-      }
+        })),
+      )
+      if (error) throw error
       showToast(`${pendingMigration?.length ?? 0} strategies imported`, 'success')
     } catch {
       showToast('Import failed', 'error')
@@ -99,6 +101,10 @@ function MigrationModal() {
   )
 }
 
+async function handleSignOut() {
+  await supabase.auth.signOut()
+}
+
 function Dashboard() {
   const {
     activePanel, setActivePanel,
@@ -116,6 +122,7 @@ function Dashboard() {
     window.createLemonSqueezy?.()
 
     function onMessage(e: MessageEvent) {
+      if (!isCheckoutOrigin(e.origin)) return
       if ((e.data as { event?: string })?.event === 'Checkout.Success') {
         refetchProfile()
       }
@@ -123,10 +130,6 @@ function Dashboard() {
     window.addEventListener('message', onMessage)
     return () => window.removeEventListener('message', onMessage)
   }, [refetchProfile])
-
-  async function handleSignOut() {
-    await supabase.auth.signOut()
-  }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-mesh text-white">

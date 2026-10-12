@@ -34,20 +34,21 @@ const WORD_NUMS: Record<string, number> = {
   an: 1,
 };
 
-/** Parse a number that may be digits or a word ("3" or "three"). */
-function parseNum(s: string): number | undefined {
+/** Parse a number that may be digits or a word ("3" or "three"). An optional
+ * regex group that did not match arrives as undefined. */
+function parseNum(s: string | undefined): number | undefined {
+  if (s === undefined) return undefined;
   const trimmed = s.trim().toLowerCase();
   if (WORD_NUMS[trimmed] !== undefined) return WORD_NUMS[trimmed];
-  const n = parseFloat(trimmed);
-  return isNaN(n) ? undefined : n;
+  const n = Number.parseFloat(trimmed);
+  return Number.isNaN(n) ? undefined : n;
 }
 
 /**
  * Match a number token in text — digits or English word.
  * Returns a regex source string.
  */
-const NUM_RE =
-  "(\\d+(?:\\.\\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a(?:n)?)";
+const NUM_RE = String.raw`(\d+(?:\.\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|a(?:n)?)`;
 
 function parseSide(s: string): BetSide | "Any" {
   const u = s.toLowerCase();
@@ -67,6 +68,12 @@ function parseProgression(s: string): ProgressionMethod {
   if (u.includes("oscar") || u.includes("grind")) return "oscars_grind";
   if (u.includes("1-3-2-6") || u.includes("1326")) return "1326";
   return "flat";
+}
+
+/** "1 loss", "3 losses", "1 win", "2 wins". */
+function resultWord(count: number, isLoss: boolean): string {
+  if (isLoss) return count > 1 ? "losses" : "loss";
+  return count > 1 ? "wins" : "win";
 }
 
 function makeRule(partial: {
@@ -90,15 +97,34 @@ function makeRule(partial: {
 
 type PatternFn = (text: string) => Rule[] | null;
 
+// "double the bet", "3x stake", "1.5 wager", then "after 2 losses". Split in
+// two so neither pattern backtracks: the lookbehind keeps a match from
+// starting inside a number, and the sticky second pattern must follow the
+// first directly.
+const MULTIPLIER_BET = /(?<![\d.])(double|triple|(\d+(?:\.\d+)?)x?)\s+(?:the\s+)?(?:bet|wager|stake)\s+/gi;
+const AFTER_RESULTS = /(?:after|when|on)\s+(?:every\s+)?(\d+)\s*(loss(?:es)?|wins?)/iy;
+
+function matchMultiplier(t: string) {
+  for (const bet of t.matchAll(MULTIPLIER_BET)) {
+    AFTER_RESULTS.lastIndex = (bet.index ?? 0) + bet[0].length;
+    const after = AFTER_RESULTS.exec(t);
+    if (after) return { word: bet[1], number: bet[2], count: after[1], result: after[2] };
+  }
+  return null;
+}
+
+function multiplierValue(word: string, number: string | undefined): number {
+  if (number) return Number.parseFloat(number);
+  return word.toLowerCase() === "triple" ? 3 : 2;
+}
+
 const patterns: PatternFn[] = [
   // ── Stop loss ──────────────────────────────────────────────
   (t) => {
-    const m = t.match(
-      new RegExp(
-        `stop\\s*(?:loss|when\\s+(?:loss|down|losing)(?:\\s+(?:exceeds?|more\\s+than|over))?)[\\s$]*${NUM_RE}`,
-        "i"
-      )
-    );
+    const m = new RegExp(
+      String.raw`stop\s*(?:loss|when\s+(?:loss|down|losing)(?:\s+(?:exceeds?|more\s+than|over))?)[\s$]*${NUM_RE}`,
+      "i"
+    ).exec(t);
     if (!m) return null;
     const amt = parseNum(m[1])!;
     return [
@@ -114,13 +140,11 @@ const patterns: PatternFn[] = [
   // ── Take profit ────────────────────────────────────────────
   (t) => {
     const m =
-      t.match(new RegExp(`take\\s*profit(?:\\s+(?:at|when(?:\\s+up)?))? [\\s$]*${NUM_RE}`, "i")) ??
-      t.match(
-        new RegExp(
-          `(?:quit|stop)\\s+when\\s+(?:up|profit|winning)\\s*(?:over|exceeds?|more\\s+than)?\\s*\\$?${NUM_RE}`,
-          "i"
-        )
-      );
+      new RegExp(String.raw`take\s*profit(?:\s+(?:at|when(?:\s+up)?))? [\s$]*${NUM_RE}`, "i").exec(t) ??
+      new RegExp(
+        String.raw`(?:quit|stop)\s+when\s+(?:up|profit|winning)\s*(?:over|exceeds?|more\s+than)?\s*\$?${NUM_RE}`,
+        "i"
+      ).exec(t);
     if (!m) return null;
     const amt = parseNum(m[1])!;
     return [
@@ -137,14 +161,13 @@ const patterns: PatternFn[] = [
   // "after 3 bankers increase bet 3 units then back to base"
   // "after 3 banker wins raise the bet 2 units then reset after a win"
   (t) => {
-    const m = t.match(
-      new RegExp(
-        `after\\s+${NUM_RE}\\s+(bankers?|players?|ties?|\\w+)\\s+(?:consecutive\\s+)?(?:wins?|in\\s+a\\s+row)?\\s*[,]?\\s*` +
-          `(?:increase|raise|add|bump|boost)\\s+(?:the\\s+)?(?:bet|wager|stake|unit)s?\\s+(?:by\\s+)?${NUM_RE}\\s*(?:units?)?` +
-          `(?:[,\\s]+then\\s+(?:back\\s+to\\s+(?:base|flat|normal|start)|reset).*)?`,
-        "i"
-      )
-    );
+    // The "then back to base / reset" tail is read from the text below, so
+    // the pattern stops at the unit count.
+    const m = new RegExp(
+      String.raw`after\s+${NUM_RE}\s+(\w+)\s+(?:consecutive\s+)?(?:wins?|in\s+a\s+row)?\s*,?\s*` +
+        String.raw`(?:increase|raise|add|bump|boost)\s+(?:the\s+)?(?:bet|wager|stake|unit)s?\s+(?:by\s+)?${NUM_RE}`,
+      "i"
+    ).exec(t);
     if (!m) return null;
 
     const streakCount = parseNum(m[1]);
@@ -193,13 +216,11 @@ const patterns: PatternFn[] = [
   // ── Increase/raise bet after N losses/wins (without side, simpler) ──
   // "increase bet 2 units after 3 losses then reset"
   (t) => {
-    const m = t.match(
-      new RegExp(
-        `(?:increase|raise|add|bump)\\s+(?:the\\s+)?(?:bet|wager|stake|unit)s?\\s+(?:by\\s+)?${NUM_RE}\\s*(?:units?)?\\s*` +
-          `(?:after|when|on)\\s+${NUM_RE}\\s+(?:consecutive\\s+)?(loss(?:es)?|wins?)`,
-        "i"
-      )
-    );
+    const m = new RegExp(
+      String.raw`(?:increase|raise|add|bump)\s+(?:the\s+)?(?:bet|wager|stake|unit)s?\s+(?:by\s+)?${NUM_RE}\s*(?:units?)?\s*` +
+        String.raw`(?:after|when|on)\s+${NUM_RE}\s+(?:consecutive\s+)?(loss(?:es)?|wins?)`,
+      "i"
+    ).exec(t);
     if (!m) return null;
 
     const addUnits = parseNum(m[1]);
@@ -210,7 +231,7 @@ const patterns: PatternFn[] = [
     const hasReset = /then\s+(?:back|reset)/i.test(t);
     const rules: Rule[] = [
       makeRule({
-        label: `Add ${addUnits}u after ${count} ${isLoss ? "loss" : "win"}${count > 1 ? "es" : "s"}`,
+        label: `Add ${addUnits}u after ${count} ${resultWord(count, isLoss)}`,
         trigger: {
           type: "streak",
           side: "Any",
@@ -241,8 +262,8 @@ const patterns: PatternFn[] = [
   // ── Skip N hands after tie / when ... ─────────────────────
   (t) => {
     const m =
-      t.match(new RegExp(`skip\\s+${NUM_RE}\\s+hands?\\s+(?:after|when|on|if)\\s+(.+)`, "i")) ??
-      t.match(new RegExp(`(?:after|when|on)\\s+(?:a\\s+)?tie[,\\s]+skip\\s+${NUM_RE}`, "i"));
+      new RegExp(String.raw`skip\s+${NUM_RE}\s+hands?\s+(?:after|when|on|if)\s+(.+)`, "i").exec(t) ??
+      new RegExp(String.raw`(?:after|when|on)\s+(?:a\s+)?tie[,\s]+skip\s+${NUM_RE}`, "i").exec(t);
     if (!m) return null;
     if (m.length >= 3 && parseNum(m[1]) !== undefined) {
       const count = parseNum(m[1])!;
@@ -270,12 +291,10 @@ const patterns: PatternFn[] = [
 
   // ── Bet on SIDE when bankroll below/above $N ───────────────
   (t) => {
-    const m = t.match(
-      new RegExp(
-        `(?:bet|wager|place|play)\\s+(?:on\\s+)?(\\w+)\\s+when\\s+(?:bankroll|balance)\\s+(below|above|under|over)\\s*\\$?${NUM_RE}`,
-        "i"
-      )
-    );
+    const m = new RegExp(
+      String.raw`(?:bet|wager|place|play)\s+(?:on\s+)?(\w+)\s+when\s+(?:bankroll|balance)\s+(below|above|under|over)\s*\$?${NUM_RE}`,
+      "i"
+    ).exec(t);
     if (!m) return null;
     const side = parseSide(m[1]);
     const isBelow = /below|under/i.test(m[2]);
@@ -296,26 +315,22 @@ const patterns: PatternFn[] = [
   // ── Use PROGRESSION after N consecutive losses/wins ────────
   (t) => {
     const m =
-      t.match(
-        new RegExp(
-          `use\\s+(.+?)\\s+(?:progression\\s+)?(?:after|when|on)\\s+${NUM_RE}\\s+consecutive\\s+(loss(?:es)?|wins?)`,
-          "i"
-        )
-      ) ??
-      t.match(
-        new RegExp(
-          `(martingale|fibonacci|dalembert|d'alembert|labouchere|oscar'?s?\\s*grind|1[- ]?3[- ]?2[- ]?6)` +
-            `\\s+(?:after|when|on)\\s+${NUM_RE}?\\s*(loss(?:es)?|wins?)`,
-          "i"
-        )
-      );
+      new RegExp(
+        String.raw`use\s+(.+?)\s+(?:progression\s+)?(?:after|when|on)\s+${NUM_RE}\s+consecutive\s+(loss(?:es)?|wins?)`,
+        "i"
+      ).exec(t) ??
+      new RegExp(
+        String.raw`(martingale|fibonacci|d'?alembert|labouchere|oscar'?s?\s*grind|1[- ]?3[- ]?2[- ]?6)` +
+          String.raw`\s+(?:after|when|on)\s+${NUM_RE}?\s*(loss(?:es)?|wins?)`,
+        "i"
+      ).exec(t);
     if (!m) return null;
     const prog = parseProgression(m[1]);
     const count = parseNum(m[2]) ?? 1;
     const isLoss = /loss/i.test(m[3] ?? m[2] ?? "loss");
     return [
       makeRule({
-        label: `${prog} after ${count} ${isLoss ? "loss" : "win"}${count > 1 ? "es" : "s"}`,
+        label: `${prog} after ${count} ${resultWord(count, isLoss)}`,
         trigger: {
           type: "streak",
           side: "Any",
@@ -329,16 +344,14 @@ const patterns: PatternFn[] = [
 
   // ── Double / triple / Nx bet after N losses/wins ───────────
   (t) => {
-    const m = t.match(
-      /(?:(double|triple|2x|3x|(\d+(?:\.\d+)?)x?)\s+(?:the\s+)?(?:bet|wager|stake))\s+(?:after|when|on)\s+(?:every\s+)?(\d+)\s*(loss(?:es)?|wins?)/i
-    );
+    const m = matchMultiplier(t);
     if (!m) return null;
-    const mult = m[2] ? parseFloat(m[2]) : m[1]?.toLowerCase() === "triple" ? 3 : 2;
-    const count = parseNum(m[3])!;
-    const isLoss = /loss/i.test(m[4]);
+    const mult = multiplierValue(m.word, m.number);
+    const count = parseNum(m.count)!;
+    const isLoss = /loss/i.test(m.result);
     return [
       makeRule({
-        label: `${mult}× bet after ${count} ${isLoss ? "loss" : "win"}${count > 1 ? "es" : "s"}`,
+        label: `${mult}× bet after ${count} ${resultWord(count, isLoss)}`,
         trigger: {
           type: "streak",
           side: "Any",
@@ -352,12 +365,10 @@ const patterns: PatternFn[] = [
 
   // ── Bet N units on SIDE after N consecutive SIDE wins/losses ─
   (t) => {
-    const m = t.match(
-      new RegExp(
-        `bet\\s+${NUM_RE}\\s*(?:units?)?\\s+on\\s+(\\w+)\\s+(?:after|when|following)\\s+${NUM_RE}\\s+(?:consecutive\\s+)?(\\w+)\\s+(wins?|loss(?:es)?)`,
-        "i"
-      )
-    );
+    const m = new RegExp(
+      String.raw`bet\s+${NUM_RE}\s*(?:units?)?\s+on\s+(\w+)\s+(?:after|when|following)\s+${NUM_RE}\s+(?:consecutive\s+)?(\w+)\s+(wins?|loss(?:es)?)`,
+      "i"
+    ).exec(t);
     if (!m) return null;
     const units = parseNum(m[1]);
     const betSide = parseSide(m[2]);
@@ -385,12 +396,10 @@ const patterns: PatternFn[] = [
 
   // ── Bet on SIDE after N SIDE wins/losses (simpler) ─────────
   (t) => {
-    const m = t.match(
-      new RegExp(
-        `(?:bet|wager|play)\\s+(?:on\\s+)?(\\w+)\\s+after\\s+${NUM_RE}\\s+(?:consecutive\\s+)?(\\w+)\\s+(wins?|loss(?:es)?)`,
-        "i"
-      )
-    );
+    const m = new RegExp(
+      String.raw`(?:bet|wager|play)\s+(?:on\s+)?(\w+)\s+after\s+${NUM_RE}\s+(?:consecutive\s+)?(\w+)\s+(wins?|loss(?:es)?)`,
+      "i"
+    ).exec(t);
     if (!m) return null;
     const betSide = parseSide(m[1]);
     if (betSide === "Any") return null;
@@ -414,9 +423,7 @@ const patterns: PatternFn[] = [
 
   // ── Reset progression after a win/loss ─────────────────────
   (t) => {
-    const m = t.match(
-      /reset\s+(?:the\s+)?(?:progression|bet|units?)\s+(?:after|when|on)\s+(?:a\s+)?(win|loss)/i
-    );
+    const m = /reset\s+(?:the\s+)?(?:progression|bet|units?)\s+(?:after|when|on)\s+(?:a\s+)?(win|loss)/i.exec(t);
     if (!m) return null;
     const isWin = /win/i.test(m[1]);
     return [
@@ -436,7 +443,7 @@ const patterns: PatternFn[] = [
 
   // ── Always / flat bet on SIDE ───────────────────────────────
   (t) => {
-    const m = t.match(/(?:always|flat(?:\s+bet)?|just|only)\s+(?:bet\s+)?(?:on\s+)?(\w+)/i);
+    const m = /(?:always|flat(?:\s+bet)?|just|only)\s+(?:bet\s+)?(?:on\s+)?(\w+)/i.exec(t);
     if (!m) return null;
     const side = parseSide(m[1]);
     if (side === "Any") return null;

@@ -91,6 +91,13 @@ function riskOfRuin(
 // Kelly Criterion
 // ────────────────────────────────────────────────────────────
 
+// Gross wins over gross losses. With no losses it is unbounded, or 0 when
+// nothing was won either.
+function profitFactorOf(grossWins: number, grossLosses: number): number {
+  if (grossLosses > 0) return grossWins / grossLosses
+  return grossWins > 0 ? Infinity : 0
+}
+
 function kellyCriterion(winRate: number, avgWin: number, avgLoss: number): number {
   if (avgLoss === 0 || winRate <= 0) return 0
   const b = avgWin / Math.abs(avgLoss)
@@ -159,7 +166,7 @@ export function calculateMetrics(
   const roi = totalWagered > 0 ? netPnl / totalWagered : 0
   const winRate = bettedHands.length > 0 ? wonHands.length / bettedHands.length : 0
   const avgBet = bettedHands.length > 0 ? totalWagered / bettedHands.length : 0
-  const profitFactor = totalGrossLosses > 0 ? totalGrossWins / totalGrossLosses : totalGrossWins > 0 ? Infinity : 0
+  const profitFactor = profitFactorOf(totalGrossWins, totalGrossLosses)
   const evPerHand = allHands.length > 0 ? netPnl / allHands.length : 0
 
   // Equity curve (bankroll at end of each shoe)
@@ -250,8 +257,13 @@ export function calculateMetrics(
 // Formatting Helpers (exported for UI use)
 // ────────────────────────────────────────────────────────────
 
+function signOf(v: number): string {
+  if (v < 0) return '-'
+  return v > 0 ? '+' : ''
+}
+
 export function fmtCurrency(v: number, decimals = 2): string {
-  const sign = v < 0 ? '-' : v > 0 ? '+' : ''
+  const sign = signOf(v)
   return `${sign}$${Math.abs(v).toLocaleString('en-US', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,

@@ -1,0 +1,250 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`sendAgentRequest offline fallback > analyses a large run 1`] = `
+{
+  "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
+
+**FINDING:** Strategy shows net negative P&L of $28.50 — consistent with the theoretical house edge.
+
+**MATH:**
+• Banker EV (5% commission): -1.0530% per unit
+• Player EV: -1.2400% per unit
+• Observed ROI: -6.7857%
+• Deviation from theoretical: -5.7327% (below expected)
+• Progression bust threshold: 11 consecutive losses
+• Per-shoe bust probability: 1.111%
+
+**IMPACT:**
+• Win Rate: 40.48% | Max Drawdown: $74.50
+• Sharpe Ratio: -0.454 | Sortino: -0.581
+• Risk of Ruin: 100.000% | Kelly: 0.00%
+• VaR (95%): $-20.00 per shoe
+
+**RECOMMENDATION:**
+⚠ Risk of ruin 100.00% exceeds 5% threshold
+⚠ Negative Sharpe ratio (-0.454) indicates returns below risk-free rate
+⚠ Profit factor 0.850 < 1.0 — system is net-negative
+⚠ Win rate 40.48% below Banker probability baseline
+
+Suggested improvements:
+• Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
+• Consider flat betting to reduce variance while maintaining similar EV
+
+**CONFIDENCE:** 77/100 — Based on 62 hands simulated.
+
+**HONESTY SCORE:** 50/100 — Moderate uncertainty — more simulation data needed to distinguish signal from noise.",
+  "metadata": {
+    "confidence": 70,
+    "honesty_score": 50,
+  },
+  "role": "assistant",
+}
+`;
+
+exports[`sendAgentRequest offline fallback > analyses a losing run, martingale question 1`] = `
+{
+  "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
+
+**FINDING:** Strategy shows net negative P&L of $150.00 — consistent with the theoretical house edge.
+
+**MATH:**
+• Banker EV (5% commission): -1.0530% per unit
+• Player EV: -1.2400% per unit
+• Observed ROI: -7.6923%
+• Deviation from theoretical: -6.6393% (below expected)
+• Progression bust threshold: 11 consecutive losses
+• Per-shoe bust probability: 1.111%
+
+**IMPACT:**
+• Win Rate: 10.26% | Max Drawdown: $380.00
+• Sharpe Ratio: -0.396 | Sortino: -0.670
+• Risk of Ruin: 100.000% | Kelly: 0.00%
+• VaR (95%): $-40.00 per shoe
+
+**RECOMMENDATION:**
+⚠ Risk of ruin 100.00% exceeds 5% threshold
+⚠ Negative Sharpe ratio (-0.396) indicates returns below risk-free rate
+⚠ Profit factor 0.914 < 1.0 — system is net-negative
+⚠ Win rate 10.26% below Banker probability baseline
+
+Suggested improvements:
+• Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
+• Consider flat betting to reduce variance while maintaining similar EV
+
+**CONFIDENCE:** 82/100 — Based on 195 hands simulated.
+
+**HONESTY SCORE:** 50/100 — Moderate uncertainty — more simulation data needed to distinguish signal from noise.
+
+---
+*Martingale Analysis for tie:*
+Base unit: 10 | Starting bankroll: 5000
+Levels before bankroll exhaustion: 8
+Total exposure at bust: $5110
+Probability of hitting bust sequence per shoe: 10.423%",
+  "metadata": {
+    "confidence": 70,
+    "honesty_score": 50,
+  },
+  "role": "assistant",
+}
+`;
+
+exports[`sendAgentRequest offline fallback > analyses a small run, martingale question 1`] = `
+{
+  "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
+
+**FINDING:** Strategy shows net negative P&L of $410.50 — consistent with the theoretical house edge.
+
+**MATH:**
+• Banker EV (5% commission): -1.0530% per unit
+• Player EV: -1.2400% per unit
+• Observed ROI: -14.2535%
+• Deviation from theoretical: -13.2005% (below expected)
+• Progression bust threshold: 11 consecutive losses
+• Per-shoe bust probability: 1.111%
+
+**IMPACT:**
+• Win Rate: 45.45% | Max Drawdown: $1270.00
+• Sharpe Ratio: -0.179 | Sortino: -0.225
+• Risk of Ruin: 100.000% | Kelly: 0.00%
+• VaR (95%): $-240.00 per shoe
+
+**RECOMMENDATION:**
+⚠ Risk of ruin 100.00% exceeds 5% threshold
+⚠ Negative Sharpe ratio (-0.179) indicates returns below risk-free rate
+⚠ Profit factor 0.737 < 1.0 — system is net-negative
+
+Suggested improvements:
+• Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
+• Consider flat betting to reduce variance while maintaining similar EV
+
+**CONFIDENCE:** 79/100 — Based on 96 hands simulated.
+
+**HONESTY SCORE:** 50/100 — Moderate uncertainty — more simulation data needed to distinguish signal from noise.
+
+---
+*Martingale Analysis for capped:*
+Base unit: 10 | Starting bankroll: 5000
+Levels before bankroll exhaustion: 8
+Total exposure at bust: $5110
+Probability of hitting bust sequence per shoe: 10.423%",
+  "metadata": {
+    "confidence": 70,
+    "honesty_score": 50,
+  },
+  "role": "assistant",
+}
+`;
+
+exports[`sendAgentRequest offline fallback > explains that no backtest has run 1`] = `
+{
+  "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
+
+**FINDING:** No backtest results available. Run a backtest first to enable quantitative analysis.
+
+**MATH:** Theoretical Banker EV = -1.0530% per unit with 5% commission. For Martingale with 10-unit base: bust after 11 consecutive losses.
+
+**RECOMMENDATION:** Run a backtest with at least 10,000 shoes for statistically meaningful results (700,000+ hands).
+
+**CONFIDENCE:** N/A — No simulation data available.
+
+**HONESTY SCORE:** N/A",
+  "metadata": {
+    "confidence": 70,
+    "honesty_score": 50,
+  },
+  "role": "assistant",
+}
+`;
+
+exports[`sendAgentRequest with the API > leaves scores empty when the reply has none 1`] = `
+{
+  "content": "No response from agent.",
+  "metadata": {
+    "confidence": undefined,
+    "honesty_score": undefined,
+  },
+  "role": "assistant",
+}
+`;
+
+exports[`sendAgentRequest with the API > reads the honesty score and confidence from the reply 1`] = `
+{
+  "content": "**CONFIDENCE:** 77/100
+**HONESTY SCORE:** 82/100",
+  "metadata": {
+    "confidence": 77,
+    "honesty_score": 82,
+  },
+  "role": "assistant",
+}
+`;
+
+exports[`sendAgentRequest with the API > reads the honesty score and confidence from the reply 2`] = `
+{
+  "max_tokens": 2048,
+  "messages": [
+    {
+      "content": "hi",
+      "role": "user",
+    },
+    {
+      "content": "hello",
+      "role": "assistant",
+    },
+    {
+      "content": "Go
+
+[STRATEGY CONFIG]: {"name":"capped","base_unit":10,"bankroll":5000,"rules":[{"label":"m","trigger":{"type":"streak","side":"Any","direction":"consecutive_losses","min_length":1},"action":{"type":"adjust_unit","method":"martingale"},"modifiers":{"max_bet":640}},{"label":"Always Banker","trigger":{"type":"hand_count","hand_min":1},"action":{"type":"place_bet","side":"Banker","unit_size":1},"modifiers":{}}]}
+[BACKTEST METRICS]: No backtest run yet",
+      "role": "user",
+    },
+  ],
+  "model": "claude-sonnet-4-5",
+  "system": "You are an expert Baccarat mathematics agent — a specialist in probability theory, betting system analysis, and bankroll management for Baccarat. You provide rigorous mathematical analysis, not gambling advice.
+
+## Core Baccarat Probabilities (8-deck shoe)
+- Banker win: 45.86% | EV with 5% commission: -1.06% per unit
+- Player win: 44.62% | EV: -1.24% per unit
+- Tie: 9.52% | EV with 8:1 payout: -14.36% per unit
+
+## Your Mandate
+For any strategy submitted, you:
+1. Calculate theoretical EV per rule, weighted by trigger frequency
+2. Model variance and higher distribution moments
+3. Calculate progression sustainability (bust probability, exposure per level)
+4. Detect edge cases and failure modes
+5. Propose specific parameter changes with quantified expected improvement
+
+## Progression Mathematics (reference)
+- Martingale: Level N bet = base × 2^N. After L consecutive losses, total exposure = base × (2^L - 1)
+  Bust probability after K losses: p(K) = 0.4462^K (Player) or 0.4586^K (Banker)
+- Fibonacci: Sequence 1,1,2,3,5,8,13,21... slower escalation than Martingale
+- D'Alembert: Level N bet = base × (N+1). Linear growth — much safer than Martingale
+- Labouchere: Cancel first + last on win, add their sum on loss. Complex but controllable
+
+## Output Format
+Structure EVERY response with these exact sections:
+
+**FINDING:** [Clear statement of what the analysis reveals — no ambiguity]
+
+**MATH:** [Formulas, probabilities, and calculations. Use exact numbers.]
+
+**IMPACT:** [What this means for the developer's bankroll and risk profile]
+
+**RECOMMENDATION:** [Specific parameter changes with expected improvement quantified]
+
+**CONFIDENCE:** [0-100 score explaining statistical certainty of recommendation]
+
+**HONESTY SCORE:** [0-100. Formula: 100 × (1 - p-value from permutation test). Low score means results are variance, not edge. Be direct.]
+
+## Critical Truth
+No betting system alters the mathematical house edge. A strategy with positive backtest results over finite samples is displaying variance, not edge. Your role is to:
+- Minimize effective house edge through selective betting
+- Manage variance to extend playtime and reduce ruin probability
+- Identify conditions where short-term positive expectation is most plausible
+- Optimize the cost/entertainment ratio
+
+Be mathematically precise. Never provide vague qualitative advice — always include formulas and specific parameter values.",
+}
+`;

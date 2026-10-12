@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { ModalBackdrop } from './ModalBackdrop'
 
 interface Props {
   mode: 'sign_in' | 'sign_up'
@@ -27,49 +28,53 @@ export const AuthModal: React.FC<Props> = ({ mode: initialMode, onClose }) => {
     if (error) { setError(error.message); setLoading(null) }
   }
 
+  async function handleSignUp() {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: callbackUrl },
+    })
+    if (!error) {
+      setSuccess('Check your email for a confirmation link.')
+      return
+    }
+    const message = error.message.toLowerCase()
+    if (!message.includes('already registered') && !message.includes('already exists')) {
+      setError(error.message)
+      return
+    }
+    // Account exists — just sign them in
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) {
+      setError('Account already exists. Check your password.')
+    } else {
+      onClose()
+    }
+  }
+
+  async function handleSignIn() {
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError(error.message)
+    } else {
+      onClose()
+    }
+  }
+
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault()
     setLoading('email')
     setError(null)
-
     if (mode === 'sign_up') {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { emailRedirectTo: callbackUrl },
-      })
-      if (error) {
-        if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already exists')) {
-          // Account exists — just sign them in
-          const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-          if (signInError) {
-            setError('Account already exists. Check your password.')
-          } else {
-            onClose()
-          }
-        } else {
-          setError(error.message)
-        }
-      } else {
-        setSuccess('Check your email for a confirmation link.')
-      }
+      await handleSignUp()
     } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        setError(error.message)
-      } else {
-        onClose()
-      }
+      await handleSignIn()
     }
     setLoading(null)
   }
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
+    <ModalBackdrop onClose={onClose} background="rgba(0,0,0,0.7)">
       <div
         className="glass-elevated rounded-2xl p-6 w-full max-w-sm relative"
         style={{ border: '1px solid rgba(255,255,255,0.1)' }}
@@ -152,6 +157,6 @@ export const AuthModal: React.FC<Props> = ({ mode: initialMode, onClose }) => {
           </button>
         </p>
       </div>
-    </div>
+    </ModalBackdrop>
   )
 }

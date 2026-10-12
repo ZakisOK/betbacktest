@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useRef, useCallback } from 'react'
-import { Bot, X, Play, Square, TrendingUp, CheckCircle, ChevronRight, Loader2, Zap, Trophy, AlertTriangle } from 'lucide-react'
+import { Bot, X, Play, Square, TrendingUp, CheckCircle, Loader2, Trophy, AlertTriangle } from 'lucide-react'
 import { runAutoOptimizer, IterationState, IterationLogEntry } from '../../engine/autoOptimizer'
 import { useStore } from '../../store/useStore'
 
@@ -27,9 +27,27 @@ const PHASE_COLORS: Record<string, string> = {
   done:     'rgba(74,222,128,0.9)',
 }
 
-function WinRateGauge({ value, target }: { value: number; target: number }) {
+// Shoes per candidate in the fast scan and mutation phases.
+const FAST_SHOES = 100
+
+function gaugeColor(value: number, target: number): string {
+  if (value >= target) return 'rgba(74,222,128,0.9)'
+  return value >= target * 0.9 ? 'rgba(245,158,11,0.9)' : 'rgba(99,102,241,0.8)'
+}
+
+function logColor(winRate: number): string {
+  if (winRate >= 0.5) return 'rgba(74,222,128,0.8)'
+  return winRate >= 0.45 ? 'rgba(245,158,11,0.7)' : 'rgba(255,255,255,0.35)'
+}
+
+// Newest entries first, each with its position in the full log as a stable key.
+function latestFirst(log: IterationLogEntry[], limit: number) {
+  return log.map((entry, seq) => ({ entry, seq })).reverse().slice(0, limit)
+}
+
+function WinRateGauge({ value, target }: Readonly<{ value: number; target: number }>) {
   const pct   = Math.min(100, (value / target) * 100)
-  const color = value >= target ? 'rgba(74,222,128,0.9)' : value >= target * 0.9 ? 'rgba(245,158,11,0.9)' : 'rgba(99,102,241,0.8)'
+  const color = gaugeColor(value, target)
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-xs font-mono">
@@ -49,10 +67,8 @@ function WinRateGauge({ value, target }: { value: number; target: number }) {
   )
 }
 
-function LogRow({ entry, i }: { entry: IterationLogEntry; i: number }) {
-  const color = entry.winRate >= 0.50 ? 'rgba(74,222,128,0.8)'
-    : entry.winRate >= 0.45 ? 'rgba(245,158,11,0.7)'
-    : 'rgba(255,255,255,0.35)'
+function LogRow({ entry, i }: Readonly<{ entry: IterationLogEntry; i: number }>) {
+  const color = logColor(entry.winRate)
   return (
     <div className="flex items-center gap-2 text-[10px] font-mono py-0.5"
       style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', opacity: i < 3 ? 1 : 0.7 }}>
@@ -66,15 +82,49 @@ function LogRow({ entry, i }: { entry: IterationLogEntry; i: number }) {
   )
 }
 
+function WinnerCard({ state, target, maxIter }: Readonly<{ state: IterationState; target: number; maxIter: number }>) {
+  if (!state.bestStrategy) {
+    return <div className="text-center py-8 text-white/30 text-sm">No valid strategy found</div>
+  }
+  const reached = state.bestWinRate >= target
+  const pnl = state.bestResults?.metrics.net_pnl
+  const pnlSign = pnl !== undefined && pnl >= 0 ? '+' : ''
+  return (
+    <div className="p-4 rounded-xl space-y-3"
+      style={{ background: reached ? 'rgba(74,222,128,0.07)' : 'rgba(245,158,11,0.07)',
+               border: `1px solid ${reached ? 'rgba(74,222,128,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
+      <div className="flex items-center gap-2">
+        <Trophy size={14} style={{ color: reached ? 'rgba(74,222,128,0.9)' : 'rgba(245,158,11,0.8)' }}/>
+        <span className="font-bold text-sm text-white/90">
+          {reached ? 'Target Reached!' : 'Best Found'}
+        </span>
+      </div>
+      <WinRateGauge value={state.bestWinRate} target={target}/>
+      <div className="text-[10px] text-white/40 truncate">{state.bestStrategy.name}</div>
+      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
+        <div className="glass-metric p-2">
+          <div className="text-white/30 mb-0.5">Net P&L</div>
+          <div className={pnlSign ? 'text-emerald-400' : 'text-red-400'}>
+            {pnl === undefined ? '—' : `${pnlSign}$${pnl.toFixed(0)}`}
+          </div>
+        </div>
+        <div className="glass-metric p-2">
+          <div className="text-white/30 mb-0.5">Iterations</div>
+          <div className="text-white/70">{state.iteration} / {maxIter}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
   const { currentStrategy, loadStrategy } = useStore()
 
   const [phase,         setPhase]     = useState<'config' | 'running' | 'done'>('config')
   const [state,         setState]     = useState<IterationState | null>(null)
-  const [targetWinRate, setTarget]    = useState(0.50)
-  const [maxIter,       setMaxIter]   = useState(6)
-  const [fastShoes,     setFastShoes] = useState(100)
-  const [deepShoes,     setDeepShoes] = useState(500)
+  const [targetWinRate, setTargetWinRate] = useState(0.50)
+  const [maxIter,       setMaxIter]       = useState(6)
+  const [deepShoes,     setDeepShoes]     = useState(500)
 
   const abortRef  = useRef<AbortController | null>(null)
   const logRef    = useRef<HTMLDivElement>(null)
@@ -96,14 +146,14 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
       bankroll:     currentStrategy.bankroll,
       targetWinRate,
       maxIterations: maxIter,
-      fastShoes,
+      fastShoes:    FAST_SHOES,
       deepShoes,
       onUpdate:     handleUpdate,
       signal:       abortRef.current.signal,
     })
 
     setPhase('done')
-  }, [currentStrategy.base_unit, currentStrategy.bankroll, targetWinRate, maxIter, fastShoes, deepShoes, handleUpdate])
+  }, [currentStrategy.base_unit, currentStrategy.bankroll, targetWinRate, maxIter, deepShoes, handleUpdate])
 
   const stop = () => {
     abortRef.current?.abort()
@@ -117,7 +167,8 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
     }
   }
 
-  const recentLog = state ? [...state.log].reverse().slice(0, 80) : []
+  const recentLog = state ? latestFirst(state.log, 80) : []
+  const estimateMinutes = deepShoes <= 200 ? maxIter : maxIter * 2
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
@@ -166,7 +217,7 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
               <div className="section-label mb-2">Target Win Rate</div>
               <div className="flex items-center gap-3">
                 <input type="range" min={0.46} max={0.56} step={0.01} value={targetWinRate}
-                  onChange={e => setTarget(+e.target.value)}
+                  onChange={e => setTargetWinRate(+e.target.value)}
                   className="flex-1 accent-violet-500"/>
                 <span className="font-mono text-sm text-violet-300 w-12 text-right">{(targetWinRate*100).toFixed(0)}%</span>
               </div>
@@ -233,7 +284,7 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
             {/* Live log */}
             <div ref={logRef} className="flex-1 overflow-y-auto min-h-0">
               <div className="section-label mb-1">Live Log</div>
-              {recentLog.map((e, i) => <LogRow key={i} entry={e} i={i}/>)}
+              {recentLog.map(({ entry, seq }, i) => <LogRow key={seq} entry={entry} i={i}/>)}
             </div>
           </div>
         )}
@@ -242,40 +293,13 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
         {phase === 'done' && state && (
           <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
             {/* Winner card */}
-            {state.bestStrategy ? (
-              <div className="p-4 rounded-xl space-y-3"
-                style={{ background: state.bestWinRate >= targetWinRate ? 'rgba(74,222,128,0.07)' : 'rgba(245,158,11,0.07)',
-                         border: `1px solid ${state.bestWinRate >= targetWinRate ? 'rgba(74,222,128,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
-                <div className="flex items-center gap-2">
-                  <Trophy size={14} style={{ color: state.bestWinRate >= targetWinRate ? 'rgba(74,222,128,0.9)' : 'rgba(245,158,11,0.8)' }}/>
-                  <span className="font-bold text-sm text-white/90">
-                    {state.bestWinRate >= targetWinRate ? 'Target Reached!' : 'Best Found'}
-                  </span>
-                </div>
-                <WinRateGauge value={state.bestWinRate} target={targetWinRate}/>
-                <div className="text-[10px] text-white/40 truncate">{state.bestStrategy.name}</div>
-                <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
-                  <div className="glass-metric p-2">
-                    <div className="text-white/30 mb-0.5">Net P&L</div>
-                    <div className={state.bestResults && state.bestResults.metrics.net_pnl >= 0 ? 'text-emerald-400' : 'text-red-400'}>
-                      {state.bestResults ? `${state.bestResults.metrics.net_pnl >= 0 ? '+' : ''}$${state.bestResults.metrics.net_pnl.toFixed(0)}` : '—'}
-                    </div>
-                  </div>
-                  <div className="glass-metric p-2">
-                    <div className="text-white/30 mb-0.5">Iterations</div>
-                    <div className="text-white/70">{state.iteration} / {maxIter}</div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-white/30 text-sm">No valid strategy found</div>
-            )}
+            <WinnerCard state={state} target={targetWinRate} maxIter={maxIter}/>
 
             {/* Log summary */}
             <div>
               <div className="section-label mb-1.5">Run Log ({state.log.length} tested)</div>
               <div className="max-h-48 overflow-y-auto">
-                {[...state.log].reverse().slice(0, 50).map((e, i) => <LogRow key={i} entry={e} i={i}/>)}
+                {latestFirst(state.log, 50).map(({ entry, seq }, i) => <LogRow key={seq} entry={entry} i={i}/>)}
               </div>
             </div>
           </div>
@@ -287,7 +311,7 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
             <button onClick={start}
               className="btn-primary flex-1 flex items-center justify-center gap-2 py-2.5 text-sm">
               <Play size={13} fill="currentColor"/>Start Optimizer
-              <span className="text-xs opacity-55 font-normal">~{deepShoes <= 200 ? `${maxIter}min` : `${maxIter * 2}min`}</span>
+              <span className="text-xs opacity-55 font-normal">~{estimateMinutes}min</span>
             </button>
           )}
           {phase === 'running' && (
