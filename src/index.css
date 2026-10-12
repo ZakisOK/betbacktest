@@ -116,82 +116,89 @@
    Glass Design System
    ──────────────────────────────────────────────────────────── */
 
-@utility glass {
+/*
+  Plain classes rather than @utility: nothing uses them with variants or
+  @apply, and the layers keep the v3 order, so Tailwind utilities still
+  override them.
+*/
+@layer components {
   /* Base glass card */
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-}
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+  }
 
-@utility glass-elevated {
   /* Elevated glass (modals, prominent cards) */
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(32px);
-  -webkit-backdrop-filter: blur(32px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-    0 32px 64px rgba(0, 0, 0, 0.4),
-    0 8px 32px rgba(0, 0, 0, 0.3);
-}
+  .glass-elevated {
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 32px 64px rgba(0, 0, 0, 0.4),
+      0 8px 32px rgba(0, 0, 0, 0.3);
+  }
 
-@utility glass-panel {
   /* Panel (full-height side panels) */
-  background: rgba(255, 255, 255, 0.025);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.025);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+  }
 
-@utility glass-metric {
   /* Metric tile */
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  .glass-metric {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
 
-  &:hover {
+  .glass-metric:hover {
     background: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.12);
     transform: translateY(-1px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   }
-}
 
-@utility btn-glass {
   /* Button variants */
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(8px);
-  border-radius: 10px;
-  transition: all 0.2s ease;
-  color: rgba(255, 255, 255, 0.7);
+  .btn-glass {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    color: rgba(255, 255, 255, 0.7);
+  }
 
-  &:hover {
+  .btn-glass:hover {
     background: rgba(255, 255, 255, 0.14);
     border-color: rgba(255, 255, 255, 0.2);
     color: white;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
   }
-}
 
-@utility btn-primary {
   /* Opaque stops keep white text at 4.5:1 or better on every part of the gradient. */
-  background: linear-gradient(135deg, rgb(37, 99, 235), rgb(79, 70, 229));
-  border: 1px solid rgba(99, 102, 241, 0.5);
-  backdrop-filter: blur(8px);
-  border-radius: 10px;
-  color: white;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  .btn-primary {
+    background: linear-gradient(135deg, rgb(37, 99, 235), rgb(79, 70, 229));
+    border: 1px solid rgba(99, 102, 241, 0.5);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+    color: white;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+  }
 
-  &:hover:not(:disabled) {
+  .btn-primary:hover:not(:disabled) {
     background: linear-gradient(135deg, rgb(29, 78, 216), rgb(67, 56, 202));
     box-shadow:
       0 8px 32px rgba(59, 130, 246, 0.5),
@@ -199,130 +206,133 @@
     transform: translateY(-1px);
   }
 
-  &:disabled {
+  .btn-primary:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
-}
 
-@utility input-glass {
   /* Input glass */
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: rgba(255, 255, 255, 0.9);
-  transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
+  .input-glass {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.9);
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+  }
 
-  &:focus-visible {
+  .input-glass:focus-visible {
     outline: none;
     border-color: rgba(99, 102, 241, 0.6);
     background: rgba(255, 255, 255, 0.07);
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
   }
 
-  &:focus:not(:focus-visible) {
+  .input-glass:focus:not(:focus-visible) {
     outline: none;
   }
 
-  &::placeholder {
+  .input-glass::placeholder {
     color: rgba(255, 255, 255, 0.25);
   }
-}
 
-@utility rule-card {
   /* Rule card */
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
-  transition: all 0.2s ease;
+  .rule-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
 
-  &:hover {
+  .rule-card:hover {
     background: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.14);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
   }
 
-  &.disabled {
+  .rule-card.disabled {
     opacity: 0.4;
   }
-}
 
-@utility glass-tag {
   /* Tag / badge */
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  font-size: 10px;
-  font-family: 'JetBrains Mono', monospace;
-  padding: 1px 6px;
-  color: rgba(255, 255, 255, 0.5);
-}
+  .glass-tag {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 1px 6px;
+    color: rgba(255, 255, 255, 0.5);
+  }
 
-@utility glow-blue {
   /* Glow effects */
-  box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
-}
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+  }
 
-@utility glow-green {
-  box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
-}
+  .glow-green {
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+  }
 
-@utility glow-red {
-  box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
-}
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+  }
 
-@utility section-label {
   /* Section label */
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.45);
-}
-
-@utility scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-  &::-webkit-scrollbar {
-    display: none;
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
   }
 }
 
-@utility text-gradient-blue {
-  background: linear-gradient(135deg, #60a5fa, #a78bfa);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 
-@utility text-gradient-green {
-  background: linear-gradient(135deg, #4ade80, #34d399);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 
-@utility text-gradient-red {
-  background: linear-gradient(135deg, #f87171, #fb923c);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+  .text-gradient-blue {
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-@utility animate-slide-in {
-  animation: slideIn 0.25s ease-out;
-}
+  .text-gradient-green {
+    background: linear-gradient(135deg, #4ade80, #34d399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-@utility animate-pulse-glow {
-  animation: pulseGlow 2s ease-in-out infinite;
-}
+  .text-gradient-red {
+    background: linear-gradient(135deg, #f87171, #fb923c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 
-/* On touch devices, rule card action icons are always visible */
-@utility rule-card-actions {
+  .animate-slide-in {
+    animation: slideIn 0.25s ease-out;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2s ease-in-out infinite;
+  }
+
+  /* On touch devices, rule card action icons are always visible */
   @media (hover: none) {
-    opacity: 1 !important;
+    .rule-card-actions {
+      opacity: 1 !important;
+    }
   }
 }
 
