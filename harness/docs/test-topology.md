@@ -25,7 +25,7 @@ Vitest characterization tests sit beside the code they pin:
 - `src/utils/rules.test.ts`: `parseNLRule` over about 90 sentences (axios is
   mocked, so the AI fallback is offline) and `ruleToSentence`.
 - `src/agent/mathAgent.test.ts`: the offline analysis, the API reply parsing and the token the client sends.
-- `functions/api/agent.test.ts`: the Claude proxy's auth, validation, quota and token cap, with its reply read by the client parser so the two sides cannot drift apart.
+- `src/agent/agentProxy.test.ts`: the Claude proxy in `functions/api/agent.ts` (auth, validation, quota, token cap), with its reply read by the client parser so the two sides cannot drift apart. It sits in `src/` because Cloudflare Pages treats every file under `functions/` as a possible route.
 - `src/lib/lemonsqueezy.test.ts`: the checkout message origin check.
 
 `src/test/helpers.ts` fixes `Math.random` and fingerprints large results, so a

@@ -1,5 +1,7 @@
+// Pins functions/api/agent.ts against the client that reads it. It lives in src/ because
+// Cloudflare Pages treats every file under functions/ as a possible route.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { agentReplyText } from '../../src/agent/agentApi'
+import { agentReplyText } from './agentApi'
 
 const { create, getUser, profile, updates } = vi.hoisted(() => ({
   create: vi.fn(),
@@ -8,7 +10,7 @@ const { create, getUser, profile, updates } = vi.hoisted(() => ({
   updates: [] as unknown[],
 }))
 
-vi.mock('../../src/lib/supabase', () => ({ supabase: {} }))
+vi.mock('../lib/supabase', () => ({ supabase: {} }))
 vi.mock('@anthropic-ai/sdk', () => ({ default: class { messages = { create } } }))
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
@@ -23,7 +25,7 @@ vi.mock('@supabase/supabase-js', () => ({
   }),
 }))
 
-const { onRequestPost } = await import('./agent')
+const { onRequestPost } = await import('../../functions/api/agent')
 
 const env = { VITE_SUPABASE_URL: 'https://example.test', SUPABASE_SERVICE_ROLE_KEY: 'k', ANTHROPIC_API_KEY: 'k' }
 const request = { system: 'CALLER PROMPT', max_tokens: 2048, messages: [{ role: 'user', content: 'Summarize' }] }
