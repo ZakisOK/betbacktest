@@ -218,7 +218,7 @@ export const AutoOptimizerPanel: React.FC<Props> = ({ onClose }) => {
               <div className="flex items-center gap-3">
                 <input type="range" min={0.46} max={0.56} step={0.01} value={targetWinRate}
                   onChange={e => setTargetWinRate(+e.target.value)}
-                  className="flex-1 accent-violet-500"/>
+                  className="flex-1 h-1 rounded-full bg-white/10 accent-violet-500 cursor-pointer"/>
                 <span className="font-mono text-sm text-violet-300 w-12 text-right">{(targetWinRate*100).toFixed(0)}%</span>
               </div>
               <div className="text-[10px] text-white/25 mt-1">Higher targets require more iterations and may not be reachable</div>

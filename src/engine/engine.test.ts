@@ -188,6 +188,34 @@ describe('runSimulation', () => {
     expect(summary(r)).toMatchSnapshot()
   })
 
+  it('ends the run at a bust', async () => {
+    const s = strategy('reckless', [
+      rule('m', { type: 'hand_count', hand_min: 0 }, { type: 'adjust_unit', method: 'martingale' }, 0, { shoe_reset: 'carry' }),
+    ], 100, 1500)
+    const r = await runSimulation(s, config({ starting_bankroll: 1500, num_shoes: 20 }), () => {})
+    const hands = r.shoes.flatMap(sh => sh.hands)
+    expect(r.shoes.map(sh => sh.starting_bankroll).filter(b => b <= 0)).toEqual([])
+    expect(r.shoes.length).toBeLessThan(20)
+    expect(r.shoes[r.shoes.length - 1].ending_bankroll).toBeLessThanOrEqual(0)
+    // The bust is the last hand of the run, and no hand before it went broke.
+    expect(hands[hands.length - 1].bankroll).toBeLessThanOrEqual(0)
+    expect(hands.slice(0, -1).filter(h => h.bankroll <= 0)).toEqual([])
+  })
+
+  it('ends only the session on a stop loss or take profit', async () => {
+    const s = strategy('stops', [
+      rule('stop loss', { type: 'financial_state', condition: 'session_loss', threshold: -50 }, { type: 'stop_loss', threshold: -50 }, 0),
+      rule('take profit', { type: 'financial_state', condition: 'session_profit', threshold: 50 }, { type: 'take_profit', threshold: 50 }, 0),
+      alwaysBanker,
+    ])
+    const r = await runSimulation(s, config(), () => {})
+    expect(r.shoes).toHaveLength(12)
+    // A shoe ends on the hand its session first reaches either threshold.
+    const stoppedAt = r.shoes.map(sh => sh.hands.findIndex(h => Math.abs(h.bankroll - sh.starting_bankroll) >= 50))
+    expect(stoppedAt.filter(i => i >= 0).length).toBeGreaterThan(0)
+    expect(stoppedAt.filter((i, n) => i >= 0 && i !== r.shoes[n].hands.length - 1)).toEqual([])
+  })
+
   it.each([
     ['6 decks, perfect shuffle', { deck_count: 6, shuffle_type: 'perfect' }],
     ['ties lose, no commission', { tie_handling: 'lose', commission_rate: 0 }],

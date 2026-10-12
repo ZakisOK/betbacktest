@@ -44,35 +44,35 @@ exports[`sendAgentRequest offline fallback > analyses a losing run, martingale q
 {
   "content": "*[Built-in Mathematical Analysis — Connect Claude API for conversational AI]*
 
-**FINDING:** Strategy shows net negative P&L of $5060.00 — consistent with the theoretical house edge.
+**FINDING:** Strategy shows net negative P&L of $5000.00 — consistent with the theoretical house edge.
 
 **MATH:**
 • Banker EV (5% commission): -1.0530% per unit
 • Player EV: -1.2400% per unit
-• Observed ROI: -11.5393%
-• Deviation from theoretical: -10.4863% (below expected)
+• Observed ROI: -11.4181%
+• Deviation from theoretical: -10.3651% (below expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.015%
+• Per-shoe bust probability: 1.126%
 
 **IMPACT:**
-• Win Rate: 9.83% | Max Drawdown: $4960.00
-• Sharpe Ratio: -2.690 | Sortino: -2.541
+• Win Rate: 9.84% | Max Drawdown: $4900.00
+• Sharpe Ratio: -1.843 | Sortino: -2.131
 • Risk of Ruin: 100.000% | Kelly: 0.00%
-• VaR (95%): $-450.00 per shoe
+• VaR (95%): $-460.00 per shoe
 
 **RECOMMENDATION:**
 ⚠ Risk of ruin 100.00% exceeds 5% threshold
-⚠ Max drawdown 4960 exceeds 30% of starting bankroll
-⚠ Negative Sharpe ratio (-2.690) indicates returns below risk-free rate
-⚠ Profit factor 0.872 < 1.0 — system is net-negative
-⚠ Win rate 9.83% below Banker probability baseline
+⚠ Max drawdown 4900 exceeds 30% of starting bankroll
+⚠ Negative Sharpe ratio (-1.843) indicates returns below risk-free rate
+⚠ Profit factor 0.873 < 1.0 — system is net-negative
+⚠ Win rate 9.84% below Banker probability baseline
 
 Suggested improvements:
 • Reduce base unit or add stricter bankroll guard (current guard: check modifiers)
 • Lower stop-loss threshold to limit drawdown exposure
 • Consider flat betting to reduce variance while maintaining similar EV
 
-**CONFIDENCE:** 95/100 — Based on 4,385 hands simulated.
+**CONFIDENCE:** 95/100 — Based on 4,379 hands simulated.
 
 **HONESTY SCORE:** 48/100 — Nothing here but the house edge: 48 in 100 pure-chance runs of this size land at least this far from the -14.36% expected return of these bets.
 
