@@ -120,7 +120,6 @@ export interface SimulationConfig {
   hands_per_shoe: number
   deck_count: 6 | 8
   commission_rate: number
-  shuffle_type: 'perfect' | 'imperfect'
   cut_card_position: number
   tie_handling: 'push' | 'lose'
   starting_bankroll: number

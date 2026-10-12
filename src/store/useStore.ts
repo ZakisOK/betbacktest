@@ -44,7 +44,6 @@ const DEFAULT_SIM_CONFIG: SimulationConfig = {
   hands_per_shoe: 70,
   deck_count: 8,
   commission_rate: 0.05,
-  shuffle_type: "perfect",
   cut_card_position: 14,
   tie_handling: "push",
   starting_bankroll: 5000,
