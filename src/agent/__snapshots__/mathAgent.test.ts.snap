@@ -157,17 +157,6 @@ exports[`sendAgentRequest offline fallback > explains that no backtest has run 1
 }
 `;
 
-exports[`sendAgentRequest with the API > leaves scores empty when the reply has none 1`] = `
-{
-  "content": "No response from agent.",
-  "metadata": {
-    "confidence": undefined,
-    "honesty_score": undefined,
-  },
-  "role": "assistant",
-}
-`;
-
 exports[`sendAgentRequest with the API > reads the honesty score and confidence from the reply 1`] = `
 {
   "content": "**CONFIDENCE:** 77/100
@@ -200,7 +189,6 @@ exports[`sendAgentRequest with the API > reads the honesty score and confidence 
       "role": "user",
     },
   ],
-  "model": "claude-sonnet-4-5",
   "system": "You are an expert Baccarat mathematics agent — a specialist in probability theory, betting system analysis, and bankroll management for Baccarat. You provide rigorous mathematical analysis, not gambling advice.
 
 ## Core Baccarat Probabilities (8-deck shoe)

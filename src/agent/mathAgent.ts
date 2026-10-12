@@ -5,8 +5,8 @@
  * mathematical analysis engine for offline/fallback operation.
  */
 
-import axios from 'axios'
 import type { Strategy, BacktestResults, AgentMessage, BetSide } from '../types'
+import { askAgent, type AgentTurn } from './agentApi'
 
 // ────────────────────────────────────────────────────────────
 // System Prompt
@@ -400,26 +400,17 @@ export async function sendAgentRequest(
 
   // Try Claude API
   try {
-    const conversationHistory = history
+    const conversationHistory: AgentTurn[] = history
       .filter((m) => m.role === 'user' || m.role === 'assistant')
       .slice(-10) // last 5 exchanges
       .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }))
 
     conversationHistory.push({ role: 'user', content: enrichedMessage })
 
-    const response = await axios.post(
-      '/api/agent',
-      {
-        model: 'claude-sonnet-4-5',
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        messages: conversationHistory,
-      },
-      { timeout: 30000 }
+    const content = await askAgent(
+      { system: SYSTEM_PROMPT, max_tokens: 2048, messages: conversationHistory },
+      30000
     )
-
-    const content =
-      response.data?.content?.[0]?.text ?? 'No response from agent.'
 
     return {
       id: crypto.randomUUID(),
@@ -432,7 +423,7 @@ export async function sendAgentRequest(
       },
     }
   } catch {
-    // The API is unreachable or failed: fall back to the built-in analysis.
+    // The API is unreachable, refused the call or sent no text: fall back to the built-in analysis.
     const content = formatLocalAnalysis(strategy, results, analysis, userMessage)
 
     return {

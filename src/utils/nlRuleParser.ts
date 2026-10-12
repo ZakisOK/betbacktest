@@ -6,8 +6,8 @@
  * for complex inputs.
  */
 
-import axios from "axios";
 import type { Action, BetSide, Modifiers, ProgressionMethod, Rule, Trigger } from "../types";
+import { askAgent } from "../agent/agentApi";
 
 // ────────────────────────────────────────────────────────────
 // Helpers
@@ -499,18 +499,10 @@ Reply with ONLY a valid JSON array, e.g. [{...}] or [{...},{...}]. No markdown, 
 
 async function parseWithAI(text: string): Promise<Rule[] | null> {
   try {
-    const resp = await axios.post(
-      "/api/agent",
-      {
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 1024,
-        system: AI_PARSE_PROMPT,
-        messages: [{ role: "user", content: text }],
-      },
-      { timeout: 12_000 }
+    const raw = await askAgent(
+      { system: AI_PARSE_PROMPT, max_tokens: 1024, messages: [{ role: "user", content: text }] },
+      12_000
     );
-
-    const raw = resp.data?.content?.[0]?.text ?? "";
     const json = raw
       .replace(/```(?:json)?/g, "")
       .replace(/```/g, "")
