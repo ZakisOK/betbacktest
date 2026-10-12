@@ -79,7 +79,7 @@ const Bubble: React.FC<{ msg: AgentMessage }> = ({ msg }) => {
         {!isUser && (msg.metadata?.honesty_score !== undefined || msg.metadata?.confidence !== undefined) && (
           <div className="flex gap-2 mt-2 pt-2" style={{ borderTop:'1px solid rgba(255,255,255,0.06)' }}>
             {msg.metadata?.honesty_score !== undefined && (
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded"
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm"
                 style={{
                   background: msg.metadata.honesty_score > 60 ? 'rgba(239,68,68,0.15)' : 'rgba(34,197,94,0.15)',
                   color:      msg.metadata.honesty_score > 60 ? 'rgba(248,113,113,0.9)' : 'rgba(74,222,128,0.9)',
@@ -89,7 +89,7 @@ const Bubble: React.FC<{ msg: AgentMessage }> = ({ msg }) => {
               </span>
             )}
             {msg.metadata?.confidence !== undefined && (
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded"
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded-sm"
                 style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.08)', color:'rgba(255,255,255,0.4)' }}>
                 Confidence {msg.metadata.confidence}/100
               </span>
