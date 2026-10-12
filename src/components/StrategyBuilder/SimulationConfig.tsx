@@ -51,7 +51,6 @@ export const SimConfig: React.FC<Props> = ({ config, onChange }) => {
         </div>
       </div>
 
-      <SliderField label="Hands / Shoe"      value={config.hands_per_shoe}   min={40}  max={85}   onChange={v => onChange({ hands_per_shoe: v })}/>
       <SliderField label="Commission Rate"   value={config.commission_rate}  min={0}   max={0.1} step={0.005} fmt={fmtPct} onChange={v => onChange({ commission_rate: v })}/>
       <SliderField label="Starting Bankroll" value={config.starting_bankroll}min={500} max={50000} step={500} fmt={fmtDol} onChange={v => onChange({ starting_bankroll: v })}/>
       <SliderField label="Cut Card Position" value={config.cut_card_position}min={10}  max={20}   onChange={v => onChange({ cut_card_position: v })}/>

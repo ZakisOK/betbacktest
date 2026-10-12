@@ -46,7 +46,6 @@ export function strategy(name: string, rules: Rule[], base_unit = 10, bankroll =
 export function config(overrides: Partial<SimulationConfig> = {}): SimulationConfig {
   return {
     num_shoes: 12,
-    hands_per_shoe: 80,
     deck_count: 8,
     commission_rate: 0.05,
     shuffle_type: 'imperfect',

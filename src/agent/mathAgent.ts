@@ -88,8 +88,9 @@ function builtInAnalysis(strategy: Strategy, results: BacktestResults | null): L
   const bustAfterLosses = maxLevels + 1
   const progBustProb = Math.pow(pPlayer, bustAfterLosses)
 
-  // Per-shoe attempts at a bust sequence (conservative)
-  const handsPerShoe = results?.config.hands_per_shoe ?? 70
+  // Per-shoe attempts at a bust sequence: the hands each shoe actually dealt,
+  // or a typical 8-deck shoe before any backtest has run
+  const handsPerShoe = results?.shoes.length ? results.metrics.total_hands / results.shoes.length : 81
   const shoeBustRisk = 1 - Math.pow(1 - progBustProb, handsPerShoe)
 
   // Honesty score: simple variance test

@@ -61,7 +61,6 @@ function uid() { return `ao_${++_c}_${Math.random().toString(36).slice(2,6)}` }
 function mkCfg(bankroll: number, shoes: number): SimulationConfig {
   return {
     num_shoes: shoes,
-    hands_per_shoe: 80,
     deck_count: 8,
     commission_rate: 0.05,
     shuffle_type: 'imperfect',

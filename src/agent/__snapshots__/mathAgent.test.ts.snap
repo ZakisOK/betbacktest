@@ -12,7 +12,7 @@ exports[`sendAgentRequest offline fallback > analyses a large run 1`] = `
 • Observed ROI: -1.2306%
 • Deviation from theoretical: -0.1776% (below expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.111%
+• Per-shoe bust probability: 1.131%
 
 **IMPACT:**
 • Win Rate: 45.74% | Max Drawdown: $322.00
@@ -52,7 +52,7 @@ exports[`sendAgentRequest offline fallback > analyses a losing run, martingale q
 • Observed ROI: -11.5393%
 • Deviation from theoretical: -10.4863% (below expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.111%
+• Per-shoe bust probability: 1.015%
 
 **IMPACT:**
 • Win Rate: 9.83% | Max Drawdown: $4960.00
@@ -102,7 +102,7 @@ exports[`sendAgentRequest offline fallback > analyses a small run, martingale qu
 • Observed ROI: 4.4142%
 • Deviation from theoretical: 5.4672% (above expected)
 • Progression bust threshold: 11 consecutive losses
-• Per-shoe bust probability: 1.111%
+• Per-shoe bust probability: 1.134%
 
 **IMPACT:**
 • Win Rate: 46.33% | Max Drawdown: $2271.00

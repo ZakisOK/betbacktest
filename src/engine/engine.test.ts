@@ -191,7 +191,7 @@ describe('runSimulation', () => {
   it.each([
     ['6 decks, perfect shuffle', { deck_count: 6, shuffle_type: 'perfect' }],
     ['ties lose, no commission', { tie_handling: 'lose', commission_rate: 0 }],
-    ['early cut card', { cut_card_position: 60, hands_per_shoe: 60 }],
+    ['early cut card', { cut_card_position: 60 }],
     ['other seed', { random_seed: 2026 }],
   ] as const)('config: %s', async (_name, overrides) => {
     const s = strategy('banker', [alwaysBanker])
